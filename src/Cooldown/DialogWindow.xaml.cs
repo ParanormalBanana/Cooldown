@@ -1,9 +1,11 @@
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Cooldown.ViewModels;
 
 namespace Cooldown;
@@ -27,22 +29,55 @@ public partial class DialogWindow : Window, IFlashable
     {
         InitializeComponent();
         SourceInitialized += (_, _) => EnableCustomChrome();
-        DataContextChanged += (_, _) => ApplyProgressSize();
+        DataContextChanged += OnDataContextChanged;
+        Closed += (_, _) =>
+        {
+            if (DataContext is INotifyPropertyChanged vm)
+                vm.PropertyChanged -= OnViewModelPropertyChanged;
+        };
     }
 
-    private void ApplyProgressSize()
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (DataContext is not MainViewModel { ModalProgress: true }) return;
-        SizeToContent = SizeToContent.Manual;
-        Width = 260;
-        Height = 260;
-        MaxHeight = 260;
+        if (e.OldValue is INotifyPropertyChanged oldVm)
+            oldVm.PropertyChanged -= OnViewModelPropertyChanged;
+        if (e.NewValue is INotifyPropertyChanged newVm)
+            newVm.PropertyChanged += OnViewModelPropertyChanged;
+        ApplyDialogSize();
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(MainViewModel.ModalTakeOffWarn)
+            or nameof(MainViewModel.ModalTakeOff)
+            or nameof(MainViewModel.ModalPutOn)
+            or nameof(MainViewModel.ModalProgress)
+            or null)
+            ApplyDialogSize();
+    }
+
+    private void ApplyDialogSize()
+    {
+        if (DataContext is not MainViewModel vm) return;
+        if (vm.ModalProgress)
+        {
+            SizeToContent = SizeToContent.Manual;
+            Width = 260;
+            Height = 260;
+            MaxHeight = 260;
+            CenterOnOwner();
+            return;
+        }
+
+        SizeToContent = SizeToContent.Height;
+        MaxHeight = 560;
+        Width = vm.ModalTakeOffWarn ? 320 : 560;
+        Dispatcher.BeginInvoke(CenterOnOwner, DispatcherPriority.Loaded);
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        if (DataContext is not MainViewModel { ModalProgress: true }) return;
-        ApplyProgressSize();
+        ApplyDialogSize();
         CenterOnOwner();
     }
 

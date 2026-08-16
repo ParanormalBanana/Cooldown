@@ -2,7 +2,7 @@
 
 Stay uninstalled on purpose.
 
-Cooldown is a Windows library that puts games on a cooldown: they uninstall at the next boot (or after 05:00 the next day if the PC stayed on). One action, a Win98-looking grid, and a rank for sticking with it.
+Cooldown is a Windows library that puts games on a cooldown: they uninstall as soon as you confirm. One action, a Win98-looking grid, and a rank for sticking with it.
 
 Windows 10/11, 64-bit. No .NET install required.
 

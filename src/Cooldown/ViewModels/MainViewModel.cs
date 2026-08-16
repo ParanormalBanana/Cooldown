@@ -70,6 +70,8 @@ internal sealed class MainViewModel : ObservableObject
         CloseModalCommand = new RelayCommand(_ => CloseModal());
         PutOnCooldownCommand = new RelayCommand(_ => PutOnCooldown());
         TakeOffCooldownCommand = new RelayCommand(_ => TakeOffCooldown());
+        WarnTakeOffCommand = new RelayCommand(_ => SetModal("off-warn"));
+        CancelTakeOffWarnCommand = new RelayCommand(_ => SetModal("off"));
         OpenAddCommand = new RelayCommand(_ => ScanCustomFolder());
         ToggleHiddenCommand = new RelayCommand(_ => ToggleHidden());
         ToggleCooldownsOnTopCommand = new RelayCommand(_ => ToggleCooldownsOnTop());
@@ -97,6 +99,8 @@ internal sealed class MainViewModel : ObservableObject
     public ICommand CloseModalCommand { get; }
     public ICommand PutOnCooldownCommand { get; }
     public ICommand TakeOffCooldownCommand { get; }
+    public ICommand WarnTakeOffCommand { get; }
+    public ICommand CancelTakeOffWarnCommand { get; }
     public ICommand OpenAddCommand { get; }
     public ICommand ToggleHiddenCommand { get; }
     public ICommand ToggleCooldownsOnTopCommand { get; }
@@ -151,20 +155,21 @@ internal sealed class MainViewModel : ObservableObject
     public bool ModalOpen => _modal != "none";
     public bool ModalPutOn => _modal == "put";
     public bool ModalTakeOff => _modal == "off";
+    public bool ModalTakeOffWarn => _modal == "off-warn";
     public bool ModalProgress => _modal == "progress";
     public bool ModalSettings => _modal == "settings";
     public string ModalTitle => _modal switch
     {
         "progress" => "My determination",
         "settings" => "Settings",
-        "put" or "off" => string.IsNullOrWhiteSpace(SelectedName) ? "Cooldown" : SelectedName,
+        "put" or "off" or "off-warn" => string.IsNullOrWhiteSpace(SelectedName) ? "Cooldown" : SelectedName,
         _ => "Cooldown",
     };
     public bool HasBlacklist => Blacklist.Count > 0;
     public string SelectedName => _selected?.Name ?? _active?.Game.Name ?? "";
     public GameItem? SelectedGame => _selected;
     public string PutOnPrompt => $"You're about to put {SelectedName} on cooldown.";
-    public string TakeOffPrompt => $"{SelectedName} is on cooldown.";
+    public string TakeOffPrompt => $"Great, {SelectedName} is already on cooldown!";
 
     public void Start(Dispatcher ui)
     {
@@ -474,11 +479,38 @@ internal sealed class MainViewModel : ObservableObject
         _state.Cooldowns.Add(entry);
         Rewards.NoteCooldownStarted(_state, already);
         Storage.Save(_state);
-        Task.Run(() => Scheduler.EnsureBackgroundTasks(_state));
+        var game = _selected.Game;
+        Task.Run(() =>
+        {
+            try
+            {
+                var ok = Uninstaller.UninstallQuietly(game);
+                _ui?.BeginInvoke(() => FinishImmediateUninstall(entry, ok));
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Immediate uninstall failed for {name}", ex);
+            }
+            Scheduler.EnsureBackgroundTasks(_state);
+        });
         CloseModal();
         RebuildRows();
         RaiseRank();
         ShowToast($"{name} is on cooldown.");
+    }
+
+    private void FinishImmediateUninstall(CooldownEntry entry, bool ok)
+    {
+        var live = _state.Cooldowns.FirstOrDefault(c => c.Id == entry.Id);
+        if (live is null) return;
+        if (ok)
+        {
+            live.LastSeenInstalled = false;
+            Rewards.NoteUninstalled(_state, live);
+            Storage.Save(_state);
+            RaiseRank();
+        }
+        Rescan(silent: true);
     }
 
     private void TakeOffCooldown()
@@ -783,6 +815,7 @@ internal sealed class MainViewModel : ObservableObject
         Raise(nameof(ModalOpen));
         Raise(nameof(ModalPutOn));
         Raise(nameof(ModalTakeOff));
+        Raise(nameof(ModalTakeOffWarn));
         Raise(nameof(ModalProgress));
         Raise(nameof(ModalSettings));
         Raise(nameof(ModalTitle));

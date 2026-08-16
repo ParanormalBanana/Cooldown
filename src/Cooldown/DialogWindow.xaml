@@ -106,10 +106,9 @@
                                     </Border>
                                     <TextBlock Text="Congrats!" FontSize="14" FontWeight="Bold"
                                                Margin="0,0,0,4"/>
-                                    <TextBlock Text="{Binding PutOnPrompt}" FontSize="12" FontWeight="Bold"
-                                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="It uninstalls the next time Windows starts, or after 5:00 AM if you leave this PC on."
-                                               TextWrapping="Wrap" Margin="0,6,0,14"/>
+                                    <TextBlock Text="{Binding PutOnPrompt}" FontSize="12"
+                                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                               Margin="0,0,0,14"/>
                                     <DockPanel>
                                         <Button DockPanel.Dock="Right" Content="Do it!" MinWidth="75" Height="23"
                                                 Padding="12,1"
@@ -137,16 +136,35 @@
                                     </Border>
                                     <TextBlock Text="{Binding TakeOffPrompt}" FontSize="12" FontWeight="Bold"
                                                TextWrapping="Wrap"/>
-                                    <TextBlock Text="Take it off if you want it to stay installed."
+                                    <TextBlock Text="... wait, what are you doing?" FontSize="12"
                                                TextWrapping="Wrap" Margin="0,6,0,14"/>
                                     <DockPanel>
-                                        <Button DockPanel.Dock="Right" Content="Take it off" Width="96" Height="23"
-                                                Style="{StaticResource DangerButton}" Command="{Binding TakeOffCooldownCommand}"/>
-                                        <Button DockPanel.Dock="Right" Content="Leave it" Width="80" Height="23" Margin="0,0,6,0"
-                                                Style="{StaticResource GhostButton}"
+                                        <Button DockPanel.Dock="Right" Content="Perfect" MinWidth="75" Height="23"
+                                                Padding="12,1"
+                                                Style="{StaticResource AccentButton}"
                                                 Command="{Binding CloseModalCommand}"/>
+                                        <Button DockPanel.Dock="Right" Content="About that..." MinWidth="75" Height="23"
+                                                Padding="12,1" Margin="0,0,6,0"
+                                                Style="{StaticResource GhostButton}"
+                                                Command="{Binding WarnTakeOffCommand}"/>
                                         <TextBlock/>
                                     </DockPanel>
+                                </StackPanel>
+
+                                <StackPanel Visibility="{Binding ModalTakeOffWarn, Converter={StaticResource BoolVis}}">
+                                    <TextBlock Text="Don't do it! You're better than that!"
+                                               FontSize="12" FontWeight="Bold"
+                                               TextWrapping="Wrap" Margin="0,0,0,14"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Content="take it off cooldown" MinWidth="75" Height="23"
+                                                Padding="12,1" Margin="0,0,6,0"
+                                                Style="{StaticResource DangerButton}"
+                                                Command="{Binding TakeOffCooldownCommand}"/>
+                                        <Button Content="Just kidding!" MinWidth="75" Height="23"
+                                                Padding="12,1"
+                                                Style="{StaticResource AccentButton}"
+                                                Command="{Binding CancelTakeOffWarnCommand}"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Grid>
                         </DockPanel>

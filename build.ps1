@@ -57,5 +57,5 @@ if ($iscc) {
     $setup = Join-Path $PSScriptRoot "dist\CooldownSetup-$version.exe"
     Write-Host "Installer: $setup" -ForegroundColor Green
 } else {
-    Write-Host "Inno Setup 6 not found — skipped installer. Install from https://jrsoftware.org/isinfo.php then re-run." -ForegroundColor Yellow
+    Write-Host "Inno Setup 6 not found - skipped installer. Install from https://jrsoftware.org/isinfo.php then re-run." -ForegroundColor Yellow
 }
