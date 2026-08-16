@@ -96,13 +96,17 @@ internal static class Detector
     public static bool IsInstalled(Game game, IReadOnlyList<Game>? scanned = null)
     {
         scanned ??= Discover();
-        if (scanned.Any(item => item.Id == game.Id))
+        if (scanned.Any(item => string.Equals(item.Id, game.Id, StringComparison.OrdinalIgnoreCase)))
             return true;
-        if (!string.IsNullOrEmpty(game.SteamAppId))
+        var key = SteamAppKey(game);
+        if (!string.IsNullOrEmpty(key))
         {
-            if (scanned.Any(item => item.SteamAppId == game.SteamAppId))
+            if (scanned.Any(item =>
+                    SteamAppKey(item) == key
+                    && (item.Source.Equals("Steam", StringComparison.OrdinalIgnoreCase)
+                        || item.Id.StartsWith("steam:", StringComparison.OrdinalIgnoreCase))))
                 return true;
-            if (SteamManifestPath(game.SteamAppId) is not null)
+            if (SteamManifestPath(key) is not null)
                 return true;
         }
         var path = (game.InstallPath ?? "").Trim();
@@ -116,6 +120,58 @@ internal static class Detector
         {
             return Directory.Exists(path);
         }
+    }
+
+    /// <summary>
+    /// Steam, Windows leftovers, and custom copies of the same title.
+    /// </summary>
+    public static bool SameGame(Game a, Game b, bool names = true)
+    {
+        if (string.Equals(a.Id, b.Id, StringComparison.OrdinalIgnoreCase))
+            return true;
+        var steamA = SteamAppKey(a);
+        var steamB = SteamAppKey(b);
+        if (!string.IsNullOrEmpty(steamA) && steamA == steamB)
+            return true;
+        var pathA = Norm(a.InstallPath);
+        var pathB = Norm(b.InstallPath);
+        if (!string.IsNullOrEmpty(pathA) && pathA == pathB)
+            return true;
+        return names
+            && !string.IsNullOrEmpty(a.Name)
+            && string.Equals(Norm(a.Name), Norm(b.Name), StringComparison.Ordinal);
+    }
+
+    private static string? SteamAppKey(Game game)
+    {
+        if (!string.IsNullOrEmpty(game.SteamAppId) && game.SteamAppId.All(char.IsDigit))
+            return game.SteamAppId;
+        if (game.Id.StartsWith("steam:", StringComparison.OrdinalIgnoreCase))
+        {
+            var id = game.Id[6..];
+            if (id.Length > 0 && id.All(char.IsDigit)) return id;
+        }
+        if (game.Id.StartsWith("win:", StringComparison.OrdinalIgnoreCase))
+        {
+            var rest = game.Id[4..];
+            const string prefix = "Steam App ";
+            if (rest.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var id = rest[prefix.Length..].Trim();
+                if (id.Length > 0 && id.All(char.IsDigit)) return id;
+            }
+        }
+        var uninstall = game.UninstallString ?? "";
+        const string token = "steam://uninstall/";
+        var at = uninstall.IndexOf(token, StringComparison.OrdinalIgnoreCase);
+        if (at >= 0)
+        {
+            var start = at + token.Length;
+            var end = start;
+            while (end < uninstall.Length && char.IsDigit(uninstall[end])) end++;
+            if (end > start) return uninstall[start..end];
+        }
+        return null;
     }
 
     public static string? SteamInstallDir(string appId)

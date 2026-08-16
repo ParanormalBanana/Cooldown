@@ -7,12 +7,11 @@ internal sealed class GameItem : ObservableObject
 {
     private ImageSource? _cover;
     private bool _onCooldown;
-    private bool _requested;
+    private int _loadedWidth;
 
-    public GameItem(Game game, bool installed, bool onCooldown, bool hidden)
+    public GameItem(Game game, bool onCooldown, bool hidden)
     {
         Game = game;
-        IsInstalled = installed;
         IsHidden = hidden;
         _onCooldown = onCooldown;
     }
@@ -20,9 +19,8 @@ internal sealed class GameItem : ObservableObject
     public Game Game { get; }
     public string Id => Game.Id;
     public string Name => Game.Name;
-    public bool IsInstalled { get; }
     public bool IsHidden { get; }
-    public string Title => IsInstalled ? Game.Name : $"{Game.Name} (missing)";
+    public string Title => Game.Name;
 
     public bool OnCooldown
     {
@@ -38,19 +36,19 @@ internal sealed class GameItem : ObservableObject
 
     public async void EnsureCover(int decodeWidth)
     {
-        if (_requested && Cover is not null) return;
+        if (Cover is not null && decodeWidth <= _loadedWidth) return;
         var cached = Covers.TryGetCached(Game, decodeWidth);
         if (cached is not null)
         {
             Cover = cached;
-            _requested = true;
+            _loadedWidth = decodeWidth;
             return;
         }
-        if (_requested) return;
-        _requested = true;
         var image = await Covers.EnsureAsync(Game, decodeWidth);
-        if (image is not null) Cover = image;
+        if (image is not null && decodeWidth >= _loadedWidth)
+        {
+            Cover = image;
+            _loadedWidth = decodeWidth;
+        }
     }
-
-    public void ResetCoverRequest() => _requested = false;
 }

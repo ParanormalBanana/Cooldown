@@ -1,4 +1,5 @@
-﻿using System.Windows;
+using System.Windows;
+using System.Windows.Controls.Primitives;
 using Cooldown.ViewModels;
 
 namespace Cooldown;
@@ -9,6 +10,7 @@ public partial class App : Application
     {
         AppPaths.Ensure();
         Log.Configure();
+        Resources[SystemParameters.MenuPopupAnimationKey] = PopupAnimation.None;
         base.OnStartup(e);
         try
         {

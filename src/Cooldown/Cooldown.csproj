@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -12,6 +12,7 @@
     <AssemblyTitle>Cooldown</AssemblyTitle>
     <Description>Stay uninstalled on purpose</Description>
     <Version>0.2.0</Version>
+    <ApplicationIcon>Assets\hourglass.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishSingleFile>false</PublishSingleFile>
     <SelfContained>true</SelfContained>
@@ -22,5 +23,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cooldown.Core\Cooldown.Core.csproj" />
+    <Resource Include="Assets\hourglass-16.png" />
+    <Resource Include="Assets\hourglass-16-white.png" />
+    <Resource Include="Assets\hourglass.png" />
+    <Resource Include="Assets\hourglass.ico" />
   </ItemGroup>
 </Project>
