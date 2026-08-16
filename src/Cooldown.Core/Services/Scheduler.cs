@@ -20,6 +20,29 @@ internal static class Scheduler
         UpsertHourlyTask(TaskWorker, workerCmd);
         SetRunKey(RunWorker, startupCmd);
         ClearRunKey(RunWatch);
+        TryStartTray();
+    }
+
+    private static void TryStartTray()
+    {
+        try
+        {
+            if (Process.GetProcessesByName("Cooldown.Agent").Length > 0) return;
+            var exe = AppPaths.AgentPath();
+            if (!File.Exists(exe) || Path.GetFileNameWithoutExtension(exe) != "Cooldown.Agent")
+                return;
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = exe,
+                Arguments = "--tray",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Could not start agent: {ex.Message}");
+        }
     }
 
     private static void SetRunKey(string name, string command)
