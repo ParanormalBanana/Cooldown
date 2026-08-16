@@ -21,6 +21,11 @@ internal static class Covers
     [
         "https://cdn.cloudflare.steamstatic.com/steam/apps/{0}/header.jpg",
         "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/{0}/header.jpg",
+        "https://cdn.akamai.steamstatic.com/steam/apps/{0}/header.jpg",
+        "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/{0}/header.jpg",
+        "https://steamcdn-a.akamaihd.net/steam/apps/{0}/header.jpg",
+        "https://cdn.cloudflare.steamstatic.com/steam/apps/{0}/library_hero.jpg",
+        "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/{0}/library_hero.jpg",
     ];
 
     public static string FilePath(Game game)
@@ -32,7 +37,7 @@ internal static class Covers
     public static bool ExistsOnDisk(Game game)
     {
         var path = FilePath(game);
-        return File.Exists(path) && new FileInfo(path).Length > 0;
+        return File.Exists(path) && new FileInfo(path).Length > 500;
     }
 
     public static ImageSource? TryGetCached(Game game, int decodeWidth)
@@ -89,34 +94,49 @@ internal static class Covers
 
     private static async Task DownloadAsync(Game game, string dest, CancellationToken ct)
     {
-        var appId = game.SteamAppId;
-        if (string.IsNullOrEmpty(appId))
-            appId = await LookupAppIdAsync(game.Name, ct);
-        if (string.IsNullOrEmpty(appId)) return;
-
-        var local = LocalSteamHeader(appId);
-        if (local is not null)
+        await LookupMissingAppIdsAsync(game, ct);
+        foreach (var appId in AppIdsFor(game))
         {
-            File.Copy(local, dest, overwrite: true);
-            return;
-        }
-
-        foreach (var template in HeaderUrls)
-        {
-            try
+            if (string.IsNullOrEmpty(appId)) continue;
+            var local = LocalSteamHeader(appId);
+            if (local is not null)
             {
-                using var response = await Http.GetAsync(string.Format(template, appId), ct);
-                if (!response.IsSuccessStatusCode) continue;
-                var data = await response.Content.ReadAsByteArrayAsync(ct);
-                if (data.Length < 500) continue;
-                await File.WriteAllBytesAsync(dest, data, ct);
+                File.Copy(local, dest, overwrite: true);
+                RememberAppId(game.Name, appId);
+                if (string.IsNullOrEmpty(game.SteamAppId)) game.SteamAppId = appId;
                 return;
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            foreach (var template in HeaderUrls)
             {
-                Log.Warn($"Cover download {appId}: {ex.Message}");
+                try
+                {
+                    using var response = await Http.GetAsync(string.Format(template, appId), ct);
+                    if (!response.IsSuccessStatusCode) continue;
+                    var data = await response.Content.ReadAsByteArrayAsync(ct);
+                    if (data.Length < 500) continue;
+                    await File.WriteAllBytesAsync(dest, data, ct);
+                    RememberAppId(game.Name, appId);
+                    if (string.IsNullOrEmpty(game.SteamAppId)) game.SteamAppId = appId;
+                    return;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    Log.Warn($"Cover download {appId}: {ex.Message}");
+                }
             }
         }
+    }
+
+    private static IEnumerable<string> AppIdsFor(Game game)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        void Offer(string? id)
+        {
+            if (!string.IsNullOrEmpty(id) && id.All(char.IsDigit)) seen.Add(id);
+        }
+        Offer(Detector.SteamAppIdFor(game));
+        Offer(CachedAppId(game.Name));
+        return seen;
     }
 
     private static string? LocalSteamHeader(string appId)
@@ -129,28 +149,60 @@ internal static class Covers
                      Path.Combine(cache, $"{appId}_header.jpg"),
                      Path.Combine(cache, appId, "header.jpg"),
                      Path.Combine(cache, $"{appId}_library_hero.jpg"),
+                     Path.Combine(cache, appId, "library_hero.jpg"),
+                     Path.Combine(cache, appId, "library_hero_2x.jpg"),
+                     Path.Combine(cache, $"{appId}_library_600x900.jpg"),
+                     Path.Combine(cache, appId, "library_600x900.jpg"),
                  })
         {
-            if (File.Exists(candidate)) return candidate;
+            if (File.Exists(candidate) && new FileInfo(candidate).Length > 500)
+                return candidate;
         }
-        return null;
+        var dir = Path.Combine(cache, appId);
+        if (!Directory.Exists(dir)) return null;
+        try
+        {
+            return Directory.EnumerateFiles(dir)
+                .Select(path => new FileInfo(path))
+                .Where(file => file.Length > 4000
+                               && file.Extension is ".jpg" or ".jpeg" or ".png" or ".webp")
+                .OrderByDescending(file => file.Length)
+                .FirstOrDefault()?.FullName;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
-    private static async Task<string> LookupAppIdAsync(string name, CancellationToken ct)
+    private static string? CachedAppId(string name)
     {
         var cache = IdCache();
         var key = name.Trim().ToLowerInvariant();
         lock (IdCacheGate)
         {
-            if (cache.TryGetValue(key, out var hit)) return hit ?? "";
+            return cache.TryGetValue(key, out var hit) && !string.IsNullOrEmpty(hit) ? hit : null;
         }
-        var appId = await SearchSteamAsync(name, ct);
+    }
+
+    private static void RememberAppId(string name, string appId)
+    {
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(appId)) return;
+        var cache = IdCache();
+        var key = name.Trim().ToLowerInvariant();
         lock (IdCacheGate)
         {
             cache[key] = appId;
             SaveIdCache(cache);
         }
-        return appId;
+    }
+
+    private static async Task LookupMissingAppIdsAsync(Game game, CancellationToken ct)
+    {
+        if (!string.IsNullOrEmpty(Detector.SteamAppIdFor(game))) return;
+        if (!string.IsNullOrEmpty(CachedAppId(game.Name))) return;
+        var appId = await SearchSteamAsync(game.Name, ct);
+        if (!string.IsNullOrEmpty(appId)) RememberAppId(game.Name, appId);
     }
 
     private static async Task<string> SearchSteamAsync(string name, CancellationToken ct)
@@ -166,23 +218,40 @@ internal static class Covers
             if (!doc.RootElement.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
                 return "";
             var wanted = NormName(name);
+            string? exact = null;
+            string? close = null;
             foreach (var item in items.EnumerateArray())
             {
-                var title = NormName(item.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "");
-                if (title == wanted || wanted.Contains(title) || title.Contains(wanted))
-                    return item.TryGetProperty("id", out var id) ? id.ToString() : "";
+                var type = item.TryGetProperty("type", out var t) ? t.GetString() ?? "" : "";
+                if (type is "bundle" or "tag") continue;
+                var title = item.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+                if (IsAddonTitle(title, name)) continue;
+                var id = item.TryGetProperty("id", out var ident) ? ident.ToString() : "";
+                if (string.IsNullOrEmpty(id) || !id.All(char.IsDigit)) continue;
+                var norm = NormName(title);
+                if (norm == wanted) { exact = id; break; }
+                if (close is null && (norm.StartsWith(wanted) || wanted.StartsWith(norm)
+                                      || norm.Contains(wanted) || wanted.Contains(norm)))
+                    close = id;
             }
-            if (items.GetArrayLength() > 0)
-            {
-                var first = items[0];
-                return first.TryGetProperty("id", out var id) ? id.ToString() : "";
-            }
+            return exact ?? close ?? "";
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             Log.Warn($"Steam search {name}: {ex.Message}");
         }
         return "";
+    }
+
+    private static bool IsAddonTitle(string title, string wanted)
+    {
+        var t = title.ToLowerInvariant();
+        var w = wanted.ToLowerInvariant();
+        foreach (var bit in new[] { "soundtrack", " ost", "dlc", "artbook", "upgrade pack" })
+        {
+            if (t.Contains(bit) && !w.Contains(bit.Trim())) return true;
+        }
+        return false;
     }
 
     private static string NormName(string value) =>
@@ -197,8 +266,12 @@ internal static class Covers
             try
             {
                 if (File.Exists(path))
+                {
                     _idCache = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path))
                                ?? new Dictionary<string, string>();
+                    foreach (var empty in _idCache.Where(kv => string.IsNullOrEmpty(kv.Value)).Select(kv => kv.Key).ToList())
+                        _idCache.Remove(empty);
+                }
             }
             catch { /* ignore */ }
             _idCache ??= new Dictionary<string, string>();

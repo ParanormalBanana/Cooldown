@@ -39,6 +39,7 @@ internal static class Storage
                             ? DateTime.Now.ToString("s")
                             : entry.CreatedAt;
                 }
+                MigrateScore(state);
                 return state;
             }
             catch (Exception ex)
@@ -47,6 +48,19 @@ internal static class Storage
                 return new AppState();
             }
         }
+    }
+
+    private static void MigrateScore(AppState state)
+    {
+        if (state.ScoreVersion >= 2) return;
+        var hadCooldown = state.Cooldowns.Count > 0;
+        var hadScore = state.Points != 0 || state.Events.Count > 0;
+        state.ScoreVersion = 2;
+        state.Points = hadCooldown ? 100 : 0;
+        state.LifetimePoints = state.Points;
+        state.Events.Clear();
+        state.AwardedMilestones.Clear();
+        state.HasRanked = hadCooldown || hadScore;
     }
 
     public static void Save(AppState state)

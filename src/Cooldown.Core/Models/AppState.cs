@@ -18,6 +18,8 @@ public sealed class AppState
     [JsonPropertyName("points")] public int Points { get; set; }
     [JsonPropertyName("lifetime_points")] public int LifetimePoints { get; set; }
     [JsonPropertyName("best_streak_days")] public int BestStreakDays { get; set; }
+    [JsonPropertyName("has_ranked")] public bool HasRanked { get; set; }
+    [JsonPropertyName("score_version")] public int ScoreVersion { get; set; }
     [JsonPropertyName("awarded_milestones")] public List<string> AwardedMilestones { get; set; } = [];
     [JsonPropertyName("known_games")] public List<Game> KnownGames { get; set; } = [];
     [JsonPropertyName("custom_games")] public List<Game> CustomGames { get; set; } = [];

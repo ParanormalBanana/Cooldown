@@ -37,6 +37,8 @@ internal sealed class MainViewModel : ObservableObject
     private static readonly string[] SplashMessages =
     [
         "Peeking at Steam", "Sniffing around Epic", "Checking GOG",
+        "Poking Ubisoft", "Asking EA", "Waking Battle.net",
+        "Checking Rockstar", "Ping Riot",
         "Rummaging in the registry", "Sorting the loot",
     ];
 
@@ -47,7 +49,6 @@ internal sealed class MainViewModel : ObservableObject
         _state.Cooldowns = _state.Cooldowns.Where(c => !IsIgnored(c.Game)).ToList();
         _showSplash = _games.Count == 0 && _state.Cooldowns.Count == 0;
         Rows = new ObservableCollection<GameRow>();
-        RewardsFeed = new ObservableCollection<RewardItem>();
         WatchFolders = new ObservableCollection<WatchFolderItem>();
         Blacklist = new ObservableCollection<BlacklistItem>();
 
@@ -66,12 +67,14 @@ internal sealed class MainViewModel : ObservableObject
         CloseModalCommand = new RelayCommand(_ => CloseModal());
         PutOnCooldownCommand = new RelayCommand(_ => PutOnCooldown());
         TakeOffCooldownCommand = new RelayCommand(_ => TakeOffCooldown());
-        OpenAddCommand = new RelayCommand(_ => SetModal("add"));
-        AddFolderCommand = new RelayCommand(_ => AddFolderAsGame());
-        ScanFolderCommand = new RelayCommand(_ => ScanCustomFolder());
+        OpenAddCommand = new RelayCommand(_ => ScanCustomFolder());
         ToggleHiddenCommand = new RelayCommand(_ => ToggleHidden());
         ToggleCooldownsOnTopCommand = new RelayCommand(_ => ToggleCooldownsOnTop());
         OpenSettingsCommand = new RelayCommand(_ => OpenSettings());
+        RemoveWatchFolderCommand = new RelayCommand(p =>
+        {
+            if (p is WatchFolderItem item) RemoveWatchFolder(item);
+        });
         RemoveBlacklistCommand = new RelayCommand(p =>
         {
             if (p is BlacklistItem item) RemoveFromBlacklist(item);
@@ -83,7 +86,6 @@ internal sealed class MainViewModel : ObservableObject
     }
 
     public ObservableCollection<GameRow> Rows { get; }
-    public ObservableCollection<RewardItem> RewardsFeed { get; }
     public ObservableCollection<WatchFolderItem> WatchFolders { get; }
     public ObservableCollection<BlacklistItem> Blacklist { get; }
     public ICommand OpenProgressCommand { get; }
@@ -93,11 +95,10 @@ internal sealed class MainViewModel : ObservableObject
     public ICommand PutOnCooldownCommand { get; }
     public ICommand TakeOffCooldownCommand { get; }
     public ICommand OpenAddCommand { get; }
-    public ICommand AddFolderCommand { get; }
-    public ICommand ScanFolderCommand { get; }
     public ICommand ToggleHiddenCommand { get; }
     public ICommand ToggleCooldownsOnTopCommand { get; }
     public ICommand OpenSettingsCommand { get; }
+    public ICommand RemoveWatchFolderCommand { get; }
     public ICommand RemoveBlacklistCommand { get; }
     public ICommand SelectGameCommand { get; }
 
@@ -113,9 +114,13 @@ internal sealed class MainViewModel : ObservableObject
     public int ColumnCount { get => _columnCount; private set => Set(ref _columnCount, value); }
     public double CardWidth { get => _cardWidth; private set => Set(ref _cardWidth, value); }
     public double CoverHeight { get => _coverHeight; private set => Set(ref _coverHeight, value); }
-    public string PointsText => $"{_state.Points} chill";
-    public string StreakText => $"Best streak {_state.BestStreakDays} days";
-    public string LifetimeText => $"Lifetime {_state.LifetimePoints}  ·  Best streak {_state.BestStreakDays} days";
+    public string RankText => Rewards.Rank(_state) == "Unranked" ? "Unranked" : $"Rank {Rewards.Rank(_state)}";
+    public string RankLetter => Rewards.Rank(_state);
+    public bool IsRanked => _state.HasRanked;
+    public string StreakText => $"{Rewards.CurrentStreak(_state)} days streak  ·  Best {_state.BestStreakDays}";
+    public string ScoreText => $"{_state.Points}";
+    public string CurrentStreakText => $"{Rewards.CurrentStreak(_state)} days";
+    public string BestStreakText => $"{_state.BestStreakDays} days";
 
     public bool ShowHidden { get => _showHidden; private set => Set(ref _showHidden, value); }
     public bool CooldownsOnTop
@@ -134,13 +139,11 @@ internal sealed class MainViewModel : ObservableObject
     public bool ModalOpen => _modal != "none";
     public bool ModalPutOn => _modal == "put";
     public bool ModalTakeOff => _modal == "off";
-    public bool ModalAdd => _modal == "add";
     public bool ModalProgress => _modal == "progress";
     public bool ModalSettings => _modal == "settings";
     public string ModalTitle => _modal switch
     {
-        "progress" => "Progress",
-        "add" => "Add a game",
+        "progress" => "My determination",
         "settings" => "Settings",
         "put" or "off" => string.IsNullOrWhiteSpace(SelectedName) ? "Cooldown" : SelectedName,
         _ => "Cooldown",
@@ -157,8 +160,7 @@ internal sealed class MainViewModel : ObservableObject
         var empty = _games.Count == 0 && _state.Cooldowns.Count == 0;
         ShowSplash = empty;
         RebuildRows();
-        Raise(nameof(PointsText));
-        Raise(nameof(StreakText));
+        RaiseRank();
         if (!empty) PrefetchVisibleCovers();
         Rescan(silent: !empty);
         Task.Run(() =>
@@ -213,6 +215,10 @@ internal sealed class MainViewModel : ObservableObject
             if (seen.Add(entry.Game.Id))
                 listed.Add(entry.Game);
         }
+
+        listed = listed
+            .OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
         var query = (_search ?? "").Trim();
         var hidden = _state.HiddenIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -316,7 +322,8 @@ internal sealed class MainViewModel : ObservableObject
         var extras = _state.CustomScanDirs
             .Where(dir => !disabledDirs.Contains(dir))
             .SelectMany(Detector.ScanDirectory);
-        return Detector.Combine(Detector.Discover(_state.DisabledSources), extras, _state.CustomGames)
+        var custom = _state.CustomGames.Where(g => !BelongsToCustomScanDir(g.InstallPath));
+        return Detector.Combine(Detector.Discover(_state.DisabledSources), extras, custom)
             .Where(g => !IsIgnored(g))
             .ToList();
     }
@@ -334,8 +341,7 @@ internal sealed class MainViewModel : ObservableObject
         _splashTimer.Stop();
         if (!silent || changed)
             RebuildRows();
-        Raise(nameof(PointsText));
-        Raise(nameof(StreakText));
+        RaiseRank();
     }
 
     private static bool SameIds(List<Game> left, List<Game> right)
@@ -355,20 +361,20 @@ internal sealed class MainViewModel : ObservableObject
 
     private void OpenProgressPage()
     {
-        RewardsFeed.Clear();
-        foreach (var ev in _state.Events.AsEnumerable().Reverse().Take(40))
-        {
-            RewardsFeed.Add(new RewardItem(
-                ev.Message,
-                ev.At.Replace("T", "  "),
-                ev.Points > 0 ? $"+{ev.Points}  " : ""));
-        }
-        Raise(nameof(LifetimeText));
-        Raise(nameof(HasRewards));
+        RaiseRank();
         SetModal("progress");
     }
 
-    public bool HasRewards => RewardsFeed.Count > 0;
+    private void RaiseRank()
+    {
+        Raise(nameof(RankText));
+        Raise(nameof(RankLetter));
+        Raise(nameof(IsRanked));
+        Raise(nameof(ScoreText));
+        Raise(nameof(StreakText));
+        Raise(nameof(CurrentStreakText));
+        Raise(nameof(BestStreakText));
+    }
 
     private void SelectGame(GameItem item)
     {
@@ -397,11 +403,14 @@ internal sealed class MainViewModel : ObservableObject
             LastFiredAt = now,
             LastSeenInstalled = installed,
         };
+        var already = _state.Cooldowns.Any(c => c.Enabled);
         _state.Cooldowns.Add(entry);
+        Rewards.NoteCooldownStarted(_state, already);
         Storage.Save(_state);
         Task.Run(() => Scheduler.EnsureBackgroundTasks(_state));
         CloseModal();
         RebuildRows();
+        RaiseRank();
         ShowToast($"{name} is on cooldown.");
     }
 
@@ -409,11 +418,13 @@ internal sealed class MainViewModel : ObservableObject
     {
         if (_active is null) return;
         var name = _active.Game.Name;
+        Rewards.NoteTakenOff(_state);
         _state.Cooldowns = _state.Cooldowns.Where(c => c.Id != _active.Id).ToList();
         Storage.Save(_state);
         Task.Run(() => Scheduler.EnsureBackgroundTasks(_state));
         CloseModal();
         RebuildRows();
+        RaiseRank();
         ShowToast($"{name} is off cooldown.");
     }
 
@@ -489,6 +500,17 @@ internal sealed class MainViewModel : ObservableObject
         Rescan(silent: true);
     }
 
+    public void RemoveWatchFolder(WatchFolderItem item)
+    {
+        if (!item.IsCustom) return;
+        _state.CustomScanDirs.RemoveAll(dir => dir.Equals(item.Key, StringComparison.OrdinalIgnoreCase));
+        _state.DisabledScanDirs.RemoveAll(dir => dir.Equals(item.Key, StringComparison.OrdinalIgnoreCase));
+        DropCustomGamesUnder(item.Key);
+        Storage.Save(_state);
+        RefreshSettingsLists();
+        Rescan(silent: true);
+    }
+
     public void RemoveFromBlacklist(BlacklistItem item)
     {
         if (!string.IsNullOrEmpty(item.Id))
@@ -513,12 +535,16 @@ internal sealed class MainViewModel : ObservableObject
     {
         _suspendWatch = true;
         WatchFolders.Clear();
-        foreach (var source in new[] { "Steam", "Epic", "GOG", "Windows" })
+        var disabled = _state.DisabledSources.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var source in Detector.WatchSources)
         {
-            var label = source == "Windows" ? "Other" : source;
+            if (!Detector.SourceAvailable(source)
+                && !disabled.Contains(source)
+                && !_games.Any(g => g.Source.Equals(source, StringComparison.OrdinalIgnoreCase)))
+                continue;
             WatchFolders.Add(new WatchFolderItem(
-                this, source, label, custom: false,
-                enabled: !_state.DisabledSources.Contains(source, StringComparer.OrdinalIgnoreCase)));
+                this, source, Detector.WatchLabel(source), custom: false,
+                enabled: !disabled.Contains(source)));
         }
         foreach (var dir in _state.CustomScanDirs)
         {
@@ -549,6 +575,33 @@ internal sealed class MainViewModel : ObservableObject
         if (!disabled && has)
         {
             list.RemoveAll(item => item.Equals(key, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private void DropCustomGamesUnder(string root)
+    {
+        _state.CustomGames = _state.CustomGames
+            .Where(g => !PathIsUnder(g.InstallPath, root))
+            .ToList();
+    }
+
+    private bool BelongsToCustomScanDir(string path) =>
+        _state.CustomScanDirs.Any(dir => PathIsUnder(path, dir))
+        || _state.DisabledScanDirs.Any(dir => PathIsUnder(path, dir));
+
+    private static bool PathIsUnder(string path, string root)
+    {
+        if (string.IsNullOrWhiteSpace(path) || string.IsNullOrWhiteSpace(root)) return false;
+        try
+        {
+            var full = Path.GetFullPath(path).TrimEnd('\\', '/');
+            var baseDir = Path.GetFullPath(root).TrimEnd('\\', '/');
+            if (full.Equals(baseDir, StringComparison.OrdinalIgnoreCase)) return true;
+            return full.StartsWith(baseDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
         }
     }
 
@@ -594,10 +647,8 @@ internal sealed class MainViewModel : ObservableObject
     private void FinishCustomScan(List<Game> found, string folder)
     {
         foreach (var game in found)
-        {
             ForgetIgnore(game);
-            RememberCustom(game);
-        }
+        DropCustomGamesUnder(folder);
         _scanGen++;
         _games = CollectGames();
         _state.KnownGames = _games;
@@ -668,7 +719,6 @@ internal sealed class MainViewModel : ObservableObject
         Raise(nameof(ModalOpen));
         Raise(nameof(ModalPutOn));
         Raise(nameof(ModalTakeOff));
-        Raise(nameof(ModalAdd));
         Raise(nameof(ModalProgress));
         Raise(nameof(ModalSettings));
         Raise(nameof(ModalTitle));

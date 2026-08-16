@@ -15,16 +15,3 @@ public sealed class CooldownEntry
     [JsonPropertyName("total_uninstalls")] public int TotalUninstalls { get; set; }
     [JsonPropertyName("enabled")] public bool Enabled { get; set; } = true;
 }
-
-public static class Milestones
-{
-    public static readonly (int Days, int Points, string Title)[] All =
-    [
-        (1, 25, "First quiet day"),
-        (3, 50, "Cooling off"),
-        (7, 100, "One week clear"),
-        (14, 150, "Two weeks of space"),
-        (30, 300, "A full month"),
-        (90, 500, "A season of quiet"),
-    ];
-}

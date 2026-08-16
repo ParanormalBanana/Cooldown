@@ -4,79 +4,81 @@ namespace Cooldown;
 
 internal static class Rewards
 {
+    public static void NoteCooldownStarted(AppState state, bool alreadyHasCooldown)
+    {
+        state.HasRanked = true;
+        AddPoints(state, alreadyHasCooldown ? 0 : 100);
+    }
+
+    public static void NoteTakenOff(AppState state)
+    {
+        state.HasRanked = true;
+        AddPoints(state, -300);
+    }
+
     public static void NoteUninstalled(AppState state, CooldownEntry entry)
     {
+        _ = state;
         entry.TotalUninstalls++;
-        AddPoints(state, 0, "uninstall",
-            $"{entry.Game.Name} was removed quietly. It stays on cooldown.",
-            entry.Game.Name);
     }
 
     public static void NoteStillClear(AppState state, CooldownEntry entry, string today)
     {
         if (entry.LastAwardDate == today) return;
+        if (DateTime.TryParse(entry.CreatedAt, out var created) && created.ToString("yyyy-MM-dd") == today)
+            return;
         entry.ClearStreakDays = string.IsNullOrEmpty(entry.LastAwardDate) ? 1 : entry.ClearStreakDays + 1;
         entry.LastAwardDate = today;
         entry.BestStreakDays = Math.Max(entry.BestStreakDays, entry.ClearStreakDays);
         state.BestStreakDays = Math.Max(state.BestStreakDays, entry.ClearStreakDays);
-        AddPoints(state, 10, "streak", StreakMessage(entry), entry.Game.Name);
-        MaybeMilestone(state, entry);
+        AddPoints(state, DailyPoints(state, entry));
     }
 
     public static void NoteReinstalled(AppState state, CooldownEntry entry)
     {
-        if (entry.ClearStreakDays > 0)
-        {
-            AddPoints(state, 0, "reinstall",
-                $"{entry.Game.Name} is back. Cooldown will try again at startup or tomorrow morning.",
-                entry.Game.Name);
-        }
+        AddPoints(state, -200);
         entry.ClearStreakDays = 0;
         entry.LastAwardDate = "";
+        state.HasRanked = true;
     }
 
-    private static void AddPoints(AppState state, int points, string kind, string message, string gameName)
+    public static string Rank(AppState state)
     {
-        if (points != 0)
-        {
-            state.Points += points;
-            state.LifetimePoints += points;
-        }
-        state.Events.Add(new RewardEvent
-        {
-            At = DateTime.Now.ToString("s"),
-            Kind = kind,
-            Message = message,
-            Points = points,
-            GameName = gameName,
-        });
-        if (state.Events.Count > 200)
-            state.Events = state.Events.Skip(state.Events.Count - 200).ToList();
+        if (!state.HasRanked) return "Unranked";
+        var score = state.Points;
+        if (score <= -101) return "F";
+        if (score <= 0) return "E";
+        if (score <= 100) return "D";
+        if (score <= 200) return "C";
+        if (score <= 300) return "B";
+        if (score <= 600) return "A";
+        return "S";
     }
 
-    private static string StreakMessage(CooldownEntry entry)
+    public static int CurrentStreak(AppState state) =>
+        state.Cooldowns
+            .Where(entry => entry.Enabled && !entry.LastSeenInstalled)
+            .Select(entry => entry.ClearStreakDays)
+            .DefaultIfEmpty(0)
+            .Max();
+
+    private static int DailyPoints(AppState state, CooldownEntry entry)
     {
-        var days = entry.ClearStreakDays;
-        return days switch
-        {
-            1 => $"Nice start. {entry.Game.Name} stayed uninstalled for a day.",
-            7 => $"A full week without {entry.Game.Name}. That is real space.",
-            30 => $"A month clear of {entry.Game.Name}. That habit is loosening.",
-            _ => $"{entry.Game.Name} has stayed uninstalled for {days} days.",
-        };
+        var uninstalled = state.Cooldowns
+            .Where(item => item.Enabled && !item.LastSeenInstalled)
+            .OrderBy(item => item.CreatedAt)
+            .ThenBy(item => item.Id)
+            .ToList();
+        var primary = uninstalled.FirstOrDefault();
+        return primary?.Id == entry.Id ? 100 : 50;
     }
 
-    private static void MaybeMilestone(AppState state, CooldownEntry entry)
+    private static void AddPoints(AppState state, int points)
     {
-        foreach (var (days, points, title) in Milestones.All)
-        {
-            var key = $"{entry.Id}:{days}";
-            if (entry.ClearStreakDays < days || state.AwardedMilestones.Contains(key)) continue;
-            state.AwardedMilestones.Add(key);
-            var suffix = days == 1 ? "" : "s";
-            AddPoints(state, points, "milestone",
-                $"{title}: {entry.Game.Name} has been gone for {days} day{suffix}.",
-                entry.Game.Name);
-        }
+        if (points == 0) return;
+        state.Points += points;
+        state.LifetimePoints += points;
+        if (state.HasRanked == false && points != 0)
+            state.HasRanked = true;
     }
 }

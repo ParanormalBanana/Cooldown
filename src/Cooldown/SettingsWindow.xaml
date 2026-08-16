@@ -43,6 +43,8 @@
 
                             <StackPanel Margin="12,10,12,12">
                                 <TextBlock Text="Watched folders" FontWeight="Bold" Margin="0,0,0,8"/>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="220"
+                                              HorizontalScrollBarVisibility="Disabled">
                                 <ItemsControl ItemsSource="{Binding WatchFolders}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
@@ -50,12 +52,22 @@
                                                 <CheckBox DockPanel.Dock="Right" Style="{StaticResource TickOnly}"
                                                           IsChecked="{Binding Enabled, Mode=TwoWay}"
                                                           VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                                <Button DockPanel.Dock="Right" Style="{StaticResource TinyClose}"
+                                                        VerticalAlignment="Center" Margin="8,0,0,0"
+                                                        Visibility="{Binding IsCustom, Converter={StaticResource BoolVis}}"
+                                                        Command="{Binding DataContext.RemoveWatchFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Remove this folder">
+                                                    <Path Stroke="#000000" StrokeThickness="1.4" Width="7" Height="7" Stretch="Uniform"
+                                                          Data="M0,0 L8,8 M8,0 L0,8"/>
+                                                </Button>
                                                 <TextBlock Text="{Binding Label}" VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis"/>
                                             </DockPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+                                </ScrollViewer>
 
                                 <TextBlock Text="Blacklist" FontWeight="Bold" Margin="0,14,0,8"/>
                                 <TextBlock Text="Nothing here yet." Foreground="#808080"

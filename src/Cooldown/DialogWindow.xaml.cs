@@ -27,6 +27,30 @@ public partial class DialogWindow : Window, IFlashable
     {
         InitializeComponent();
         SourceInitialized += (_, _) => EnableCustomChrome();
+        DataContextChanged += (_, _) => ApplyProgressSize();
+    }
+
+    private void ApplyProgressSize()
+    {
+        if (DataContext is not MainViewModel { ModalProgress: true }) return;
+        SizeToContent = SizeToContent.Manual;
+        Width = 260;
+        Height = 260;
+        MaxHeight = 260;
+    }
+
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainViewModel { ModalProgress: true }) return;
+        ApplyProgressSize();
+        CenterOnOwner();
+    }
+
+    private void CenterOnOwner()
+    {
+        if (Owner is not { } owner) return;
+        Left = owner.Left + (owner.ActualWidth - ActualWidth) / 2;
+        Top = owner.Top + (owner.ActualHeight - ActualHeight) / 2;
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

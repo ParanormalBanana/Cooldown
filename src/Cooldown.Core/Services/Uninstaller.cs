@@ -8,7 +8,8 @@ internal static class Uninstaller
     private static readonly string[] SafeMarkers =
     [
         @"steamapps\common", "steamapps/common", "epic games", "gog galaxy", "gog games",
-        "xboxgames", @"ubisoft game launcher\games", "origin games", "ea games", "battle.net",
+        "xboxgames", "ubisoft", "origin games", "ea games", "battle.net", "blizzard",
+        "rockstar games", "riot games",
     ];
 
     public static bool UninstallQuietly(Game game)
@@ -24,7 +25,7 @@ internal static class Uninstaller
             else if (!string.IsNullOrWhiteSpace(game.UninstallString)
                      && !game.UninstallString.StartsWith("steam://", StringComparison.OrdinalIgnoreCase))
                 RunHidden(WithSilentFlags(game.UninstallString));
-            RemoveInstallDir(game.InstallPath, allowCustom: IsCustom(game));
+            RemoveInstallDir(game.InstallPath, allowCustom: IsCustom(game) || IsKnownStore(game));
         }
         catch (Exception ex)
         {
@@ -112,6 +113,9 @@ internal static class Uninstaller
     private static bool IsCustom(Game game) =>
         game.Source.Equals("Custom", StringComparison.OrdinalIgnoreCase)
         || game.Id.StartsWith("custom:", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsKnownStore(Game game) =>
+        game.Source is "Ubisoft" or "EA" or "Battle.net" or "Xbox" or "Rockstar" or "Riot";
 
     private static void RemoveInstallDir(string? rawPath, bool allowCustom)
     {

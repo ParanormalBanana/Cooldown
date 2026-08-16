@@ -16,7 +16,8 @@
         SnapsToDevicePixels="True"
         WindowStartupLocation="CenterOwner"
         Icon="pack://application:,,,/Assets/hourglass.ico"
-        PreviewKeyDown="Window_PreviewKeyDown">
+        PreviewKeyDown="Window_PreviewKeyDown"
+        Loaded="Window_Loaded">
     <Window.Resources>
         <local:BoolVis x:Key="BoolVis"/>
         <local:BoolVis x:Key="InvVis" Invert="True"/>
@@ -43,41 +44,52 @@
                             </Grid>
 
                             <Grid Margin="12,10,12,12">
-                                <StackPanel Visibility="{Binding ModalProgress, Converter={StaticResource BoolVis}}">
-                                    <TextBlock Text="{Binding PointsText}" FontSize="12" FontWeight="Bold" Foreground="#000080"/>
-                                    <TextBlock Text="{Binding LifetimeText}" Margin="0,2,0,10"/>
-                                    <TextBlock Text="Stay uninstalled and this page fills up with congratulations."
-                                               TextWrapping="Wrap" Margin="0,0,0,8"
-                                               Visibility="{Binding HasRewards, Converter={StaticResource InvVis}}"/>
-                                    <Border MaxHeight="300" BorderBrush="#808080" BorderThickness="1,1,0,0"
-                                            Visibility="{Binding HasRewards, Converter={StaticResource BoolVis}}">
-                                        <Border BorderBrush="#000000" BorderThickness="1,1,0,0">
-                                            <Border BorderBrush="#FFFFFF" BorderThickness="0,0,1,1" Background="#FFFFFF">
-                                                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="296">
-                                                    <ItemsControl ItemsSource="{Binding RewardsFeed}" Margin="6">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <Border Margin="0,3" Background="#C0C0C0">
-                                                                    <Border BorderBrush="#808080" BorderThickness="1,1,0,0">
-                                                                        <Border BorderBrush="#FFFFFF" BorderThickness="0,0,1,1" Padding="8,6">
-                                                                            <StackPanel>
-                                                                                <TextBlock TextWrapping="Wrap">
-                                                                                    <Run Text="{Binding Points, Mode=OneWay}" Foreground="#000080" FontWeight="Bold"/>
-                                                                                    <Run Text="{Binding Message, Mode=OneWay}" Foreground="#000000"/>
-                                                                                </TextBlock>
-                                                                                <TextBlock Text="{Binding When}" Foreground="#808080" Margin="0,3,0,0"/>
-                                                                            </StackPanel>
-                                                                        </Border>
-                                                                    </Border>
-                                                                </Border>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </ScrollViewer>
-                                            </Border>
-                                        </Border>
-                                    </Border>
-                                </StackPanel>
+                                <Grid Visibility="{Binding ModalProgress, Converter={StaticResource BoolVis}}">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <TextBlock VerticalAlignment="Top"
+                                                   LineStackingStrategy="BlockLineHeight" LineHeight="144"
+                                                   Visibility="{Binding IsRanked, Converter={StaticResource BoolVis}}">
+                                            <Run Text="My rank:"/>
+                                            <Run FontSize="144" FontWeight="Bold" Text="&#x200B;"/>
+                                        </TextBlock>
+                                        <TextBlock VerticalAlignment="Top"
+                                                   Visibility="{Binding IsRanked, Converter={StaticResource InvVis}}">
+                                            <Run Text="My rank:"/>
+                                            <Run FontSize="16" FontWeight="Bold" Text="&#x200B;"/>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding RankLetter}"
+                                                   FontSize="144" FontWeight="Bold" Foreground="#000080"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                   LineStackingStrategy="BlockLineHeight" LineHeight="144"
+                                                   Visibility="{Binding IsRanked, Converter={StaticResource BoolVis}}"/>
+                                        <TextBlock Text="Unranked"
+                                                   FontSize="16" FontWeight="Bold" Foreground="#000080"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                   Visibility="{Binding IsRanked, Converter={StaticResource InvVis}}"/>
+                                    </Grid>
+                                    <DockPanel Grid.Row="2" Margin="0,0,0,8" LastChildFill="True">
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding ScoreText}"
+                                                   FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBlock Text="Score:" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                    <DockPanel Grid.Row="3" Margin="0,0,0,8" LastChildFill="True">
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding CurrentStreakText}"
+                                                   FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBlock Text="Current streak" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                    <DockPanel Grid.Row="4" LastChildFill="True">
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding BestStreakText}"
+                                                   FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBlock Text="Best streak" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                </Grid>
 
                                 <StackPanel Visibility="{Binding ModalPutOn, Converter={StaticResource BoolVis}}">
                                     <Border Margin="0,0,0,10" BorderBrush="#808080" BorderThickness="1,1,0,0">
@@ -106,19 +118,6 @@
                                                 Padding="12,1" Margin="0,0,6,0"
                                                 Style="{StaticResource GhostButton}"
                                                 Command="{Binding CloseModalCommand}"/>
-                                        <TextBlock/>
-                                    </DockPanel>
-                                </StackPanel>
-
-                                <StackPanel Visibility="{Binding ModalAdd, Converter={StaticResource BoolVis}}">
-                                    <TextBlock Text="Add a game" FontSize="12" FontWeight="Bold"/>
-                                    <TextBlock Text="Add one folder as a game, or scan a folder for several."
-                                               TextWrapping="Wrap" Margin="0,6,0,14"/>
-                                    <DockPanel>
-                                        <Button DockPanel.Dock="Right" Content="Scan a folder" Width="110" Height="23"
-                                                Style="{StaticResource AccentButton}" Command="{Binding ScanFolderCommand}"/>
-                                        <Button DockPanel.Dock="Right" Content="Add this folder" Width="110" Height="23" Margin="0,0,6,0"
-                                                Style="{StaticResource GhostButton}" Command="{Binding AddFolderCommand}"/>
                                         <TextBlock/>
                                     </DockPanel>
                                 </StackPanel>
