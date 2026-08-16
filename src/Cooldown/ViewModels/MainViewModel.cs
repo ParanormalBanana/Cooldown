@@ -32,6 +32,7 @@ internal sealed class MainViewModel : ObservableObject
     private bool _scanBusy;
     private int _scanGen;
     private Dispatcher? _ui;
+    private bool _suspendWatch;
 
     private static readonly string[] SplashMessages =
     [
@@ -47,6 +48,8 @@ internal sealed class MainViewModel : ObservableObject
         _showSplash = _games.Count == 0 && _state.Cooldowns.Count == 0;
         Rows = new ObservableCollection<GameRow>();
         RewardsFeed = new ObservableCollection<RewardItem>();
+        WatchFolders = new ObservableCollection<WatchFolderItem>();
+        Blacklist = new ObservableCollection<BlacklistItem>();
 
         _searchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(160) };
         _searchTimer.Tick += (_, _) => { _searchTimer.Stop(); RebuildRows(); };
@@ -67,6 +70,12 @@ internal sealed class MainViewModel : ObservableObject
         AddFolderCommand = new RelayCommand(_ => AddFolderAsGame());
         ScanFolderCommand = new RelayCommand(_ => ScanCustomFolder());
         ToggleHiddenCommand = new RelayCommand(_ => ToggleHidden());
+        ToggleCooldownsOnTopCommand = new RelayCommand(_ => ToggleCooldownsOnTop());
+        OpenSettingsCommand = new RelayCommand(_ => OpenSettings());
+        RemoveBlacklistCommand = new RelayCommand(p =>
+        {
+            if (p is BlacklistItem item) RemoveFromBlacklist(item);
+        });
         SelectGameCommand = new RelayCommand(p =>
         {
             if (p is GameItem item) SelectGame(item);
@@ -75,6 +84,8 @@ internal sealed class MainViewModel : ObservableObject
 
     public ObservableCollection<GameRow> Rows { get; }
     public ObservableCollection<RewardItem> RewardsFeed { get; }
+    public ObservableCollection<WatchFolderItem> WatchFolders { get; }
+    public ObservableCollection<BlacklistItem> Blacklist { get; }
     public ICommand OpenProgressCommand { get; }
     public ICommand OpenLibraryCommand { get; }
     public ICommand RescanCommand { get; }
@@ -85,6 +96,9 @@ internal sealed class MainViewModel : ObservableObject
     public ICommand AddFolderCommand { get; }
     public ICommand ScanFolderCommand { get; }
     public ICommand ToggleHiddenCommand { get; }
+    public ICommand ToggleCooldownsOnTopCommand { get; }
+    public ICommand OpenSettingsCommand { get; }
+    public ICommand RemoveBlacklistCommand { get; }
     public ICommand SelectGameCommand { get; }
 
     public string Search { get => _search; set { if (Set(ref _search, value)) DebounceSearch(); } }
@@ -104,6 +118,16 @@ internal sealed class MainViewModel : ObservableObject
     public string LifetimeText => $"Lifetime {_state.LifetimePoints}  ·  Best streak {_state.BestStreakDays} days";
 
     public bool ShowHidden { get => _showHidden; private set => Set(ref _showHidden, value); }
+    public bool CooldownsOnTop
+    {
+        get => _state.CooldownsOnTop;
+        private set
+        {
+            if (_state.CooldownsOnTop == value) return;
+            _state.CooldownsOnTop = value;
+            Raise(nameof(CooldownsOnTop));
+        }
+    }
     public string EmptyMessage { get => _emptyMessage; private set => Set(ref _emptyMessage, value); }
     public bool ShowEmpty { get => _showEmpty; private set => Set(ref _showEmpty, value); }
 
@@ -112,13 +136,16 @@ internal sealed class MainViewModel : ObservableObject
     public bool ModalTakeOff => _modal == "off";
     public bool ModalAdd => _modal == "add";
     public bool ModalProgress => _modal == "progress";
+    public bool ModalSettings => _modal == "settings";
     public string ModalTitle => _modal switch
     {
         "progress" => "Progress",
         "add" => "Add a game",
-        "put" => "Congrats!",
+        "settings" => "Settings",
+        "put" or "off" => string.IsNullOrWhiteSpace(SelectedName) ? "Cooldown" : SelectedName,
         _ => "Cooldown",
     };
+    public bool HasBlacklist => Blacklist.Count > 0;
     public string SelectedName => _selected?.Name ?? _active?.Game.Name ?? "";
     public GameItem? SelectedGame => _selected;
     public string PutOnPrompt => $"You're about to put {SelectedName} on cooldown.";
@@ -169,18 +196,22 @@ internal sealed class MainViewModel : ObservableObject
     {
         var listed = new List<Game>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in _state.Cooldowns)
-        {
-            if (IsIgnored(entry.Game)) continue;
-            if (!seen.Add(entry.Game.Id)) continue;
-            var live = _games.FirstOrDefault(g => Detector.SameGame(g, entry.Game));
-            if (live is not null) seen.Add(live.Id);
-            listed.Add(entry.Game);
-        }
         foreach (var game in _games)
         {
             if (!IsIgnored(game) && seen.Add(game.Id))
                 listed.Add(game);
+        }
+        foreach (var entry in _state.Cooldowns)
+        {
+            if (IsIgnored(entry.Game)) continue;
+            var live = _games.FirstOrDefault(g => Detector.SameGame(g, entry.Game));
+            if (live is not null)
+            {
+                seen.Add(live.Id);
+                continue;
+            }
+            if (seen.Add(entry.Game.Id))
+                listed.Add(entry.Game);
         }
 
         var query = (_search ?? "").Trim();
@@ -201,11 +232,11 @@ internal sealed class MainViewModel : ObservableObject
             : [];
 
         Rows.Clear();
-        AddItemRows(visible);
+        AddGroupedRows(visible);
         if (hiddenItems.Count > 0)
         {
             Rows.Add(new GameRow([], "Hidden"));
-            AddItemRows(hiddenItems);
+            AddGroupedRows(hiddenItems);
         }
 
         if (Rows.Count == 0 && !ShowSplash && listed.Count > 0)
@@ -220,6 +251,20 @@ internal sealed class MainViewModel : ObservableObject
             ShowEmpty = false;
         }
         PrefetchVisibleCovers();
+    }
+
+    private void AddGroupedRows(List<GameItem> items)
+    {
+        if (items.Count == 0) return;
+        if (!CooldownsOnTop)
+        {
+            AddItemRows(items);
+            return;
+        }
+        var cooling = items.Where(item => item.OnCooldown).ToList();
+        var rest = items.Where(item => !item.OnCooldown).ToList();
+        AddItemRows(cooling);
+        AddItemRows(rest);
     }
 
     private void AddItemRows(List<GameItem> items)
@@ -267,8 +312,11 @@ internal sealed class MainViewModel : ObservableObject
 
     private List<Game> CollectGames()
     {
-        var extras = _state.CustomScanDirs.SelectMany(Detector.ScanDirectory);
-        return Detector.Combine(Detector.Discover(), extras, _state.CustomGames)
+        var disabledDirs = _state.DisabledScanDirs.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var extras = _state.CustomScanDirs
+            .Where(dir => !disabledDirs.Contains(dir))
+            .SelectMany(Detector.ScanDirectory);
+        return Detector.Combine(Detector.Discover(_state.DisabledSources), extras, _state.CustomGames)
             .Where(g => !IsIgnored(g))
             .ToList();
     }
@@ -417,6 +465,93 @@ internal sealed class MainViewModel : ObservableObject
         RebuildRows();
     }
 
+    public void ToggleCooldownsOnTop()
+    {
+        CooldownsOnTop = !CooldownsOnTop;
+        Storage.Save(_state);
+        RebuildRows();
+    }
+
+    public void OpenSettings()
+    {
+        RefreshSettingsLists();
+        SetModal("settings");
+    }
+
+    public void SetWatchEnabled(WatchFolderItem item, bool enabled)
+    {
+        if (_suspendWatch) return;
+        if (item.IsCustom)
+            SetDisabled(_state.DisabledScanDirs, item.Key, !enabled);
+        else
+            SetDisabled(_state.DisabledSources, item.Key, !enabled);
+        Storage.Save(_state);
+        Rescan(silent: true);
+    }
+
+    public void RemoveFromBlacklist(BlacklistItem item)
+    {
+        if (!string.IsNullOrEmpty(item.Id))
+        {
+            _state.IgnoredIds = _state.IgnoredIds
+                .Where(id => !id.Equals(item.Id, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        if (!string.IsNullOrEmpty(item.Name))
+        {
+            _state.IgnoredNames = _state.IgnoredNames
+                .Where(name => !name.Equals(item.Name, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        Storage.Save(_state);
+        RefreshSettingsLists();
+        Rescan(silent: true);
+        ShowToast($"{item.Name} can show up again.");
+    }
+
+    private void RefreshSettingsLists()
+    {
+        _suspendWatch = true;
+        WatchFolders.Clear();
+        foreach (var source in new[] { "Steam", "Epic", "GOG", "Windows" })
+        {
+            var label = source == "Windows" ? "Other" : source;
+            WatchFolders.Add(new WatchFolderItem(
+                this, source, label, custom: false,
+                enabled: !_state.DisabledSources.Contains(source, StringComparer.OrdinalIgnoreCase)));
+        }
+        foreach (var dir in _state.CustomScanDirs)
+        {
+            WatchFolders.Add(new WatchFolderItem(
+                this, dir, dir, custom: true,
+                enabled: !_state.DisabledScanDirs.Contains(dir, StringComparer.OrdinalIgnoreCase)));
+        }
+        _suspendWatch = false;
+
+        Blacklist.Clear();
+        var ids = _state.IgnoredIds;
+        var names = _state.IgnoredNames;
+        var count = Math.Max(ids.Count, names.Count);
+        for (var i = 0; i < count; i++)
+        {
+            var id = i < ids.Count ? ids[i] : "";
+            var name = i < names.Count ? names[i] : id;
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name)) continue;
+            Blacklist.Add(new BlacklistItem(id, string.IsNullOrWhiteSpace(name) ? id : name));
+        }
+        Raise(nameof(HasBlacklist));
+    }
+
+    private static void SetDisabled(List<string> list, string key, bool disabled)
+    {
+        var has = list.Contains(key, StringComparer.OrdinalIgnoreCase);
+        if (disabled && !has) list.Add(key);
+        if (!disabled && has)
+        {
+            list.RemoveAll(item => item.Equals(key, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
     private void AddFolderAsGame()
     {
         var path = PickFolder("Choose the game folder");
@@ -535,6 +670,7 @@ internal sealed class MainViewModel : ObservableObject
         Raise(nameof(ModalTakeOff));
         Raise(nameof(ModalAdd));
         Raise(nameof(ModalProgress));
+        Raise(nameof(ModalSettings));
         Raise(nameof(ModalTitle));
         Raise(nameof(SelectedName));
         Raise(nameof(SelectedGame));

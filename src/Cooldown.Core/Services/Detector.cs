@@ -39,13 +39,14 @@ internal static class Detector
         "overlay", "cefsharp", "webhelper",
     ];
 
-    public static List<Game> Discover()
+    public static List<Game> Discover(IEnumerable<string>? disabledSources = null)
     {
+        var off = disabledSources?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
         var found = new List<Game>();
-        found.AddRange(SteamGames());
-        found.AddRange(EpicGames());
-        found.AddRange(GogGames());
-        found.AddRange(RegistryGames());
+        if (!off.Contains("Steam")) found.AddRange(SteamGames());
+        if (!off.Contains("Epic")) found.AddRange(EpicGames());
+        if (!off.Contains("GOG")) found.AddRange(GogGames());
+        if (!off.Contains("Windows")) found.AddRange(RegistryGames());
         return Combine(found);
     }
 

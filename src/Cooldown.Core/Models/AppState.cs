@@ -25,4 +25,7 @@ public sealed class AppState
     [JsonPropertyName("hidden_ids")] public List<string> HiddenIds { get; set; } = [];
     [JsonPropertyName("ignored_ids")] public List<string> IgnoredIds { get; set; } = [];
     [JsonPropertyName("ignored_names")] public List<string> IgnoredNames { get; set; } = [];
+    [JsonPropertyName("cooldowns_on_top")] public bool CooldownsOnTop { get; set; }
+    [JsonPropertyName("disabled_sources")] public List<string> DisabledSources { get; set; } = [];
+    [JsonPropertyName("disabled_scan_dirs")] public List<string> DisabledScanDirs { get; set; } = [];
 }

@@ -1,8 +1,8 @@
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
 using Cooldown.ViewModels;
 
 namespace Cooldown;
@@ -17,6 +17,9 @@ public partial class MainWindow : Window
     private const int DwmwaBorderColor = 34;
     private const int DwmwcpDoNotRound = 1;
     private const int BorderColor = 0x00C0C0C0;
+
+    private Window? _dialog;
+    private bool _syncingDialog;
 
     public MainWindow()
     {
@@ -33,6 +36,67 @@ public partial class MainWindow : Window
             if (DataContext is MainViewModel vm)
                 vm.SetViewportWidth(GameList.ActualWidth > 0 ? GameList.ActualWidth : ActualWidth - 48);
         };
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is MainViewModel vm)
+                vm.PropertyChanged += OnViewModelPropertyChanged;
+        };
+        Activated += (_, _) =>
+        {
+            if (_dialog is { IsVisible: true } && !_dialog.IsActive)
+            {
+                _dialog.Activate();
+                if (_dialog is IFlashable flash)
+                    flash.Flash();
+            }
+        };
+        Closed += (_, _) => _dialog?.Close();
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(MainViewModel.ModalOpen) or null)
+            SyncDialog();
+    }
+
+    private void SyncDialog()
+    {
+        if (_syncingDialog) return;
+        var open = DataContext is MainViewModel { ModalOpen: true };
+        if (open)
+            ShowDialogWindow();
+        else
+            CloseDialogWindow();
+    }
+
+    private void ShowDialogWindow()
+    {
+        if (_dialog != null) return;
+        Window window = DataContext is MainViewModel { ModalSettings: true }
+            ? new SettingsWindow()
+            : new DialogWindow();
+        window.Owner = this;
+        window.DataContext = DataContext;
+        window.Closed += (_, _) =>
+        {
+            _dialog = null;
+            if (DataContext is MainViewModel { ModalOpen: true } vm)
+            {
+                _syncingDialog = true;
+                try { vm.CloseModal(); }
+                finally { _syncingDialog = false; }
+            }
+        };
+        _dialog = window;
+        window.Show();
+    }
+
+    private void CloseDialogWindow()
+    {
+        if (_dialog == null) return;
+        var dialog = _dialog;
+        _dialog = null;
+        dialog.Close();
     }
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -55,26 +119,14 @@ public partial class MainWindow : Window
             vm.OpenProgressCommand.Execute(null);
     }
 
-    private int _captionFlash;
-
-    private async void Scrim_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void Scrim_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         e.Handled = true;
-        var token = ++_captionFlash;
-        var active = (Brush)FindResource("ActiveCaptionFill");
-        var inactive = (Brush)FindResource("InactiveCaptionFill");
-        for (var i = 0; i < 3; i++)
-        {
-            if (token != _captionFlash) return;
-            ModalCaption.Background = inactive;
-            await Task.Delay(80);
-            if (token != _captionFlash) return;
-            ModalCaption.Background = active;
-            await Task.Delay(80);
-        }
+        if (_dialog is IFlashable flash)
+            flash.Flash();
+        else
+            _dialog?.Activate();
     }
-
-    private void ModalCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => e.Handled = true;
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 

@@ -37,6 +37,10 @@
             <Separator/>
             <MenuItem x:Name="ToggleHiddenItem" Header="Show hidden games" IsCheckable="True"
                       Click="ToggleHidden_Click"/>
+            <MenuItem x:Name="ToggleCooldownsOnTopItem" Header="Cooldown games on top" IsCheckable="True"
+                      Click="ToggleCooldownsOnTop_Click"/>
+            <Separator/>
+            <MenuItem Header="Settings..." Click="Settings_Click"/>
         </ContextMenu>
     </UserControl.ContextMenu>
     <Border x:Name="Root" SnapsToDevicePixels="True" UseLayoutRounding="True"

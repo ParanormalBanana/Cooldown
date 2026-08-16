@@ -80,6 +80,8 @@ public partial class GameCard : UserControl
             {
                 if (item.Name == "ToggleHiddenItem")
                     item.IsChecked = vm.ShowHidden;
+                else if (item.Name == "ToggleCooldownsOnTopItem")
+                    item.IsChecked = vm.CooldownsOnTop;
             }
         }
     }
@@ -100,6 +102,10 @@ public partial class GameCard : UserControl
     }
 
     private void ToggleHidden_Click(object sender, RoutedEventArgs e) => Vm?.ToggleHidden();
+
+    private void ToggleCooldownsOnTop_Click(object sender, RoutedEventArgs e) => Vm?.ToggleCooldownsOnTop();
+
+    private void Settings_Click(object sender, RoutedEventArgs e) => Vm?.OpenSettings();
 
     private static SolidColorBrush Brush(string hex)
     {
