@@ -52,16 +52,23 @@ internal static class Detector
     {
         var off = disabledSources?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
         var found = new List<Game>();
-        if (!off.Contains("Steam")) found.AddRange(SteamGames());
-        if (!off.Contains("Epic")) found.AddRange(EpicGames());
-        if (!off.Contains("GOG")) found.AddRange(GogGames());
-        if (!off.Contains("Ubisoft")) found.AddRange(UbisoftGames());
-        if (!off.Contains("EA")) found.AddRange(EaGames());
-        if (!off.Contains("Battle.net")) found.AddRange(BattleNetGames());
-        if (!off.Contains("Xbox")) found.AddRange(XboxGames());
-        if (!off.Contains("Rockstar")) found.AddRange(RockstarGames());
-        if (!off.Contains("Riot")) found.AddRange(RiotGames());
-        if (!off.Contains("Windows")) found.AddRange(RegistryGames());
+        void Add(string source, Func<List<Game>> scan)
+        {
+            if (off.Contains(source)) return;
+            if (source != "Windows" && !SourceAvailable(source)) return;
+            try { found.AddRange(scan()); }
+            catch (Exception ex) { Log.Warn($"{source} scan skipped: {ex.Message}"); }
+        }
+        Add("Steam", SteamGames);
+        Add("Epic", EpicGames);
+        Add("GOG", GogGames);
+        Add("Ubisoft", UbisoftGames);
+        Add("EA", EaGames);
+        Add("Battle.net", BattleNetGames);
+        Add("Xbox", XboxGames);
+        Add("Rockstar", RockstarGames);
+        Add("Riot", RiotGames);
+        Add("Windows", RegistryGames);
         return Combine(found);
     }
 
@@ -76,7 +83,7 @@ internal static class Detector
         "EA" => HasRegistryKey(EaKeySpecs()) || EaInstallRoots().Any(),
         "Battle.net" => File.Exists(BattleNetProductDb())
                         || Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Battle.net")),
-        "Xbox" => XboxInstallRoots().Any(HasGameFolders),
+        "Xbox" => XboxPresent(),
         "Rockstar" => RockstarLauncherPresent(),
         "Riot" => Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Riot Games")),
         "Windows" => false,
@@ -747,16 +754,18 @@ internal static class Detector
         }
     }
 
+    private static bool XboxPresent() => Directory.Exists(@"C:\XboxGames") || HasRegistryKey(XboxKeySpecs());
+
+    private static IEnumerable<(RegistryHive Hive, string Path, RegistryView View)> XboxKeySpecs()
+    {
+        yield return (RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\GamingServices", RegistryView.Registry64);
+        yield return (RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\GamingServices", RegistryView.Registry32);
+        yield return (RegistryHive.LocalMachine, @"SOFTWARE\Microsoft\Xbox", RegistryView.Registry64);
+    }
+
     private static IEnumerable<string> XboxInstallRoots()
     {
         yield return @"C:\XboxGames";
-        var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-        yield return Path.Combine(pf, "ModifiableWindowsApps");
-        foreach (var drive in DriveInfo.GetDrives().Where(d => d.IsReady && d.DriveType == DriveType.Fixed))
-        {
-            var root = Path.Combine(drive.RootDirectory.FullName, "XboxGames");
-            if (Directory.Exists(root)) yield return root;
-        }
     }
 
     private static IEnumerable<string> ExistingDirsIn(byte[] data)
@@ -771,7 +780,9 @@ internal static class Detector
             if (len >= 4)
             {
                 var raw = Encoding.ASCII.GetString(data, start, len).Replace('/', '\\').TrimEnd('\\');
-                if (raw.Length >= 4 && char.IsAsciiLetter(raw[0]) && raw[1] == ':' && raw[2] == '\\')
+                if (raw.Length >= 4 && char.IsAsciiLetter(raw[0]) && raw[1] == ':' && raw[2] == '\\'
+                    && raw.IndexOfAny(Path.GetInvalidPathChars()) < 0
+                    && !IsGenericRoot(raw) && !IsBattleNetNoise(raw))
                 {
                     string? full = null;
                     try
@@ -1022,12 +1033,6 @@ internal static class Detector
             if (key is not null) return true;
         }
         return false;
-    }
-
-    private static bool HasGameFolders(string dir)
-    {
-        try { return Directory.Exists(dir) && Directory.EnumerateDirectories(dir).Any(); }
-        catch { return false; }
     }
 
     private static bool RockstarLauncherPresent()

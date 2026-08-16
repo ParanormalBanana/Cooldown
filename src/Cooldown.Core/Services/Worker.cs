@@ -16,7 +16,7 @@ internal static class Worker
         AppPaths.Ensure();
         Log.Configure();
         var state = Storage.Load();
-        var scanned = Detector.Discover();
+        var scanned = Detector.Discover(state.DisabledSources);
         var now = DateTime.Now;
         var active = new HashSet<string>(events, StringComparer.OrdinalIgnoreCase);
         var changed = false;

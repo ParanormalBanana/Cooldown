@@ -31,8 +31,11 @@ internal sealed class MainViewModel : ObservableObject
     private int _splashTick;
     private bool _scanBusy;
     private int _scanGen;
+    private bool _scanQueued;
+    private bool _scanQueuedSilent = true;
     private Dispatcher? _ui;
     private bool _suspendWatch;
+    private const int MinScanVisibleMs = 400;
 
     private static readonly string[] SplashMessages =
     [
@@ -104,7 +107,16 @@ internal sealed class MainViewModel : ObservableObject
 
     public string Search { get => _search; set { if (Set(ref _search, value)) DebounceSearch(); } }
     public string RescanLabel { get => _rescanLabel; set => Set(ref _rescanLabel, value); }
-    public bool Scanning { get => _scanning; set { if (Set(ref _scanning, value)) Raise(nameof(RescanEnabled)); } }
+    public bool Scanning
+    {
+        get => _scanning;
+        set
+        {
+            if (!Set(ref _scanning, value)) return;
+            Raise(nameof(RescanEnabled));
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
     public bool RescanEnabled => !Scanning && ParentEnabled;
     public bool ParentEnabled => _modal == "none";
     public bool ShowSplash { get => _showSplash; set => Set(ref _showSplash, value); }
@@ -292,28 +304,88 @@ internal sealed class MainViewModel : ObservableObject
 
     private void Rescan(bool silent = false)
     {
-        if (_scanBusy) return;
-        _scanBusy = true;
-        var gen = ++_scanGen;
         if (!silent)
+            SetScanningUi(true);
+        if (_scanBusy)
         {
-            Scanning = true;
-            RescanLabel = "Scanning";
+            _scanQueued = true;
+            if (!silent) _scanQueuedSilent = false;
+            return;
+        }
+
+        _scanBusy = true;
+        _scanQueued = false;
+        _scanQueuedSilent = true;
+        var gen = ++_scanGen;
+        var started = Environment.TickCount64;
+        Task.Run(() =>
+        {
+            List<Game>? games = null;
+            try
+            {
+                games = CollectGames();
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Rescan failed", ex);
+            }
+
+            if (!silent)
+            {
+                var wait = MinScanVisibleMs - (int)(Environment.TickCount64 - started);
+                if (wait > 0)
+                    Thread.Sleep(wait);
+            }
+
+            void Done()
+            {
+                try
+                {
+                    if (gen == _scanGen && games is not null)
+                        ApplyGames(games, silent);
+                }
+                finally
+                {
+                    FinishScanTurn();
+                }
+            }
+
+            if (_ui is not null)
+                _ui.BeginInvoke(Done);
+            else
+                FinishScanTurn();
+        });
+    }
+
+    private void FinishScanTurn()
+    {
+        _scanBusy = false;
+        if (_scanQueued)
+        {
+            var againSilent = _scanQueuedSilent;
+            _scanQueued = false;
+            _scanQueuedSilent = true;
+            Rescan(againSilent);
+            return;
+        }
+        SetScanningUi(false);
+    }
+
+    private void SetScanningUi(bool on)
+    {
+        Scanning = on;
+        RescanLabel = on ? "Scanning" : "Rescan";
+        if (on)
+        {
             if (_games.Count == 0 && _state.Cooldowns.Count == 0)
             {
                 ShowSplash = true;
                 _splashTimer.Start();
             }
+            return;
         }
-        Task.Run(() =>
-        {
-            var games = CollectGames();
-            _ui?.BeginInvoke(() =>
-            {
-                if (gen != _scanGen) return;
-                ApplyGames(games, silent);
-            });
-        });
+        ShowSplash = false;
+        _splashTimer.Stop();
     }
 
     private List<Game> CollectGames()
@@ -334,11 +406,6 @@ internal sealed class MainViewModel : ObservableObject
         _games = games;
         _state.KnownGames = games;
         Storage.Save(_state);
-        _scanBusy = false;
-        Scanning = false;
-        RescanLabel = "Rescan";
-        ShowSplash = false;
-        _splashTimer.Stop();
         if (!silent || changed)
             RebuildRows();
         RaiseRank();
@@ -635,11 +702,12 @@ internal sealed class MainViewModel : ObservableObject
         if (!_state.CustomScanDirs.Contains(full, StringComparer.OrdinalIgnoreCase))
             _state.CustomScanDirs.Add(full);
         CloseModal();
-        Scanning = true;
-        RescanLabel = "Scanning";
+        SetScanningUi(true);
         Task.Run(() =>
         {
-            var found = Detector.ScanDirectory(full);
+            List<Game> found = [];
+            try { found = Detector.ScanDirectory(full); }
+            catch (Exception ex) { Log.Error("Folder scan failed", ex); }
             _ui?.BeginInvoke(() => FinishCustomScan(found, full));
         });
     }
@@ -649,17 +717,13 @@ internal sealed class MainViewModel : ObservableObject
         foreach (var game in found)
             ForgetIgnore(game);
         DropCustomGamesUnder(folder);
-        _scanGen++;
-        _games = CollectGames();
-        _state.KnownGames = _games;
         Storage.Save(_state);
-        Scanning = false;
-        RescanLabel = "Rescan";
-        RebuildRows();
         var label = string.IsNullOrEmpty(folder) ? "that folder" : Path.GetFileName(folder.TrimEnd('\\', '/'));
         ShowToast(found.Count == 0
             ? $"No games found in {label}."
             : $"Found {found.Count} game{(found.Count == 1 ? "" : "s")} in {label}.");
+        _scanGen++;
+        Rescan();
     }
 
     private static string? PickFolder(string title)
