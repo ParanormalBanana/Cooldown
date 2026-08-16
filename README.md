@@ -1,8 +1,8 @@
 # Cooldown
 
-Stay uninstalled on purpose.
+I created this program for gaming addicts who want o stay off their games. 
 
-Cooldown is a Windows library that puts games on a cooldown: they uninstall at the next boot (or after 05:00 the next day if the PC stayed on). One action, a Win98-looking grid, and a rank for sticking with it.
+Basically, you put a game on cooldown, and it get auto-uninstalled from your PC everyday. If you still want to play the game, you need to download it again, which makes it more difficult and adds time which you can use to think about doing something productive instead. 
 
 Windows 10/11, 64-bit. No .NET install required.
 
