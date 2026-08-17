@@ -75,8 +75,10 @@
                                                    Visibility="{Binding IsRanked, Converter={StaticResource InvVis}}"/>
                                     </Grid>
                                     <DockPanel Grid.Row="2" Margin="0,0,0,8" LastChildFill="True">
-                                        <TextBlock DockPanel.Dock="Right" Text="{Binding ScoreText}"
-                                                   FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <Button DockPanel.Dock="Right" Content="{Binding ScoreText}" MinWidth="51" Height="23"
+                                                Padding="8,1" Margin="8,0,0,0" FontWeight="Bold"
+                                                Style="{StaticResource ClassicButton}"
+                                                Command="{Binding OpenJourneyCommand}"/>
                                         <TextBlock Text="Score:" VerticalAlignment="Center"/>
                                     </DockPanel>
                                     <DockPanel Grid.Row="3" Margin="0,0,0,8" LastChildFill="True">
@@ -90,6 +92,52 @@
                                         <TextBlock Text="Best streak" VerticalAlignment="Center"/>
                                     </DockPanel>
                                 </Grid>
+
+                                <DockPanel Visibility="{Binding ModalJourney, Converter={StaticResource BoolVis}}"
+                                           LastChildFill="True">
+                                    <TextBlock DockPanel.Dock="Top" Text="Nothing logged yet." Foreground="#808080"
+                                               Margin="0,0,0,8"
+                                               Visibility="{Binding HasJourney, Converter={StaticResource InvVis}}"/>
+                                    <Border Visibility="{Binding HasJourney, Converter={StaticResource BoolVis}}"
+                                            BorderBrush="#808080" BorderThickness="1,1,0,0">
+                                        <Border BorderBrush="#FFFFFF" BorderThickness="0,0,1,1">
+                                            <Border BorderBrush="#000000" BorderThickness="1,1,0,0">
+                                                <Border BorderBrush="#DFDFDF" BorderThickness="0,0,1,1" Background="#FFFFFF">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="320"
+                                                                  HorizontalScrollBarVisibility="Disabled">
+                                                        <ItemsControl ItemsSource="{Binding Journey}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid Margin="6,4">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Grid.RowDefinitions>
+                                                                            <RowDefinition Height="Auto"/>
+                                                                            <RowDefinition Height="Auto"/>
+                                                                        </Grid.RowDefinitions>
+                                                                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
+                                                                                   VerticalAlignment="Center"/>
+                                                                        <TextBlock Grid.Column="1" Text="{Binding RankLetter}"
+                                                                                   FontWeight="Bold" Foreground="#000080"
+                                                                                   VerticalAlignment="Center"
+                                                                                   HorizontalAlignment="Center" Margin="8,0"/>
+                                                                        <TextBlock Grid.Column="2" Text="{Binding Points}"
+                                                                                   FontWeight="Bold" VerticalAlignment="Center"/>
+                                                                        <TextBlock Grid.Row="1" Text="{Binding When}"
+                                                                                   Foreground="#808080" FontSize="10"/>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </ScrollViewer>
+                                                </Border>
+                                            </Border>
+                                        </Border>
+                                    </Border>
+                                </DockPanel>
 
                                 <StackPanel Visibility="{Binding ModalPutOn, Converter={StaticResource BoolVis}}">
                                     <Border Margin="0,0,0,10" BorderBrush="#808080" BorderThickness="1,1,0,0">

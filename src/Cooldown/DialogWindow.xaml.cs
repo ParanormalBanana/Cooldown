@@ -53,6 +53,7 @@ public partial class DialogWindow : Window, IFlashable
             or nameof(MainViewModel.ModalTakeOff)
             or nameof(MainViewModel.ModalPutOn)
             or nameof(MainViewModel.ModalProgress)
+            or nameof(MainViewModel.ModalJourney)
             or null)
             ApplyDialogSize();
     }
@@ -72,7 +73,9 @@ public partial class DialogWindow : Window, IFlashable
 
         SizeToContent = SizeToContent.Height;
         MaxHeight = 560;
-        Width = vm.ModalTakeOffWarn || vm.ModalPutOnWarn ? 320 : 560;
+        Width = vm.ModalJourney ? 420
+            : vm.ModalTakeOffWarn || vm.ModalPutOnWarn ? 320
+            : 560;
         Dispatcher.BeginInvoke(CenterOnOwner, DispatcherPriority.Loaded);
     }
 

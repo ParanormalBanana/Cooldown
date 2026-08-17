@@ -16,16 +16,18 @@ internal sealed class GameRow
 
 internal sealed class RewardItem
 {
-    public RewardItem(string message, string when, string points)
+    public RewardItem(string message, string when, string points, string rankLetter = "")
     {
         Message = message;
         When = when;
         Points = points;
+        RankLetter = rankLetter;
     }
 
     public string Message { get; }
     public string When { get; }
     public string Points { get; }
+    public string RankLetter { get; }
 }
 
 internal sealed class WatchFolderItem : ObservableObject

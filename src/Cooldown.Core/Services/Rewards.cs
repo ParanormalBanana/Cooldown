@@ -4,16 +4,17 @@ namespace Cooldown;
 
 internal static class Rewards
 {
-    public static void NoteCooldownStarted(AppState state, bool alreadyHasCooldown)
+    public static void NoteCooldownStarted(AppState state, bool alreadyHasCooldown, string gameName)
     {
         state.HasRanked = true;
-        AddPoints(state, alreadyHasCooldown ? 0 : 100);
+        AddPoints(state, alreadyHasCooldown ? 10 : 100, "cooldown",
+            $"Put {gameName} on cooldown", gameName);
     }
 
-    public static void NoteTakenOff(AppState state)
+    public static void NoteTakenOff(AppState state, string gameName)
     {
         state.HasRanked = true;
-        AddPoints(state, -300);
+        AddPoints(state, -300, "takeoff", $"Took {gameName} off cooldown", gameName);
     }
 
     public static void NoteUninstalled(AppState state, CooldownEntry entry)
@@ -31,21 +32,23 @@ internal static class Rewards
         entry.LastAwardDate = today;
         entry.BestStreakDays = Math.Max(entry.BestStreakDays, entry.ClearStreakDays);
         state.BestStreakDays = Math.Max(state.BestStreakDays, entry.ClearStreakDays);
-        AddPoints(state, DailyPoints(state, entry));
+        var points = DailyPoints(state, entry);
+        AddPoints(state, points, "daily", $"Another day off {entry.Game.Name}", entry.Game.Name);
     }
 
     public static void NoteReinstalled(AppState state, CooldownEntry entry)
     {
-        AddPoints(state, -200);
+        AddPoints(state, -200, "reinstall", $"Reinstalled {entry.Game.Name}", entry.Game.Name);
         entry.ClearStreakDays = 0;
         entry.LastAwardDate = "";
         state.HasRanked = true;
     }
 
-    public static string Rank(AppState state)
+    public static string Rank(AppState state) => RankFromScore(state.Points, state.HasRanked);
+
+    public static string RankFromScore(int score, bool ranked)
     {
-        if (!state.HasRanked) return "Unranked";
-        var score = state.Points;
+        if (!ranked) return "Unranked";
         if (score <= -101) return "F";
         if (score <= 0) return "E";
         if (score <= 100) return "D";
@@ -73,12 +76,19 @@ internal static class Rewards
         return primary?.Id == entry.Id ? 100 : 50;
     }
 
-    private static void AddPoints(AppState state, int points)
+    private static void AddPoints(AppState state, int points, string kind, string message, string gameName)
     {
         if (points == 0) return;
         state.Points += points;
         state.LifetimePoints += points;
-        if (state.HasRanked == false && points != 0)
-            state.HasRanked = true;
+        state.HasRanked = true;
+        state.Events.Add(new RewardEvent
+        {
+            At = DateTime.Now.ToString("s"),
+            Kind = kind,
+            Message = message,
+            Points = points,
+            GameName = gameName,
+        });
     }
 }

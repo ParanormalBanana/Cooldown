@@ -54,6 +54,7 @@ internal sealed class MainViewModel : ObservableObject
         Rows = new ObservableCollection<GameRow>();
         WatchFolders = new ObservableCollection<WatchFolderItem>();
         Blacklist = new ObservableCollection<BlacklistItem>();
+        Journey = new ObservableCollection<RewardItem>();
 
         _searchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(160) };
         _searchTimer.Tick += (_, _) => { _searchTimer.Stop(); RebuildRows(); };
@@ -65,6 +66,7 @@ internal sealed class MainViewModel : ObservableObject
         _toastTimer.Tick += (_, _) => { _toastTimer.Stop(); ToastVisible = false; };
 
         OpenProgressCommand = new RelayCommand(_ => OpenProgressPage());
+        OpenJourneyCommand = new RelayCommand(_ => OpenJourney());
         OpenLibraryCommand = new RelayCommand(_ => CloseModal());
         RescanCommand = new RelayCommand(_ => Rescan(), _ => !Scanning);
         CloseModalCommand = new RelayCommand(_ => CloseModal());
@@ -95,7 +97,9 @@ internal sealed class MainViewModel : ObservableObject
     public ObservableCollection<GameRow> Rows { get; }
     public ObservableCollection<WatchFolderItem> WatchFolders { get; }
     public ObservableCollection<BlacklistItem> Blacklist { get; }
+    public ObservableCollection<RewardItem> Journey { get; }
     public ICommand OpenProgressCommand { get; }
+    public ICommand OpenJourneyCommand { get; }
     public ICommand OpenLibraryCommand { get; }
     public ICommand RescanCommand { get; }
     public ICommand CloseModalCommand { get; }
@@ -162,15 +166,18 @@ internal sealed class MainViewModel : ObservableObject
     public bool ModalTakeOff => _modal == "off";
     public bool ModalTakeOffWarn => _modal == "off-warn";
     public bool ModalProgress => _modal == "progress";
+    public bool ModalJourney => _modal == "journey";
     public bool ModalSettings => _modal == "settings";
     public string ModalTitle => _modal switch
     {
         "progress" => "My determination",
+        "journey" => "The journey so far",
         "settings" => "Settings",
         "put" or "put-warn" or "off" or "off-warn" => string.IsNullOrWhiteSpace(SelectedName) ? "Cooldown" : SelectedName,
         _ => "Cooldown",
     };
     public bool HasBlacklist => Blacklist.Count > 0;
+    public bool HasJourney => Journey.Count > 0;
     public string SelectedName => _selected?.Name ?? _active?.Game.Name ?? "";
     public GameItem? SelectedGame => _selected;
     public string PutOnPrompt => $"You're about to put {SelectedName} on cooldown.";
@@ -442,6 +449,34 @@ internal sealed class MainViewModel : ObservableObject
         SetModal("progress");
     }
 
+    private void OpenJourney()
+    {
+        RebuildJourney();
+        SetModal("journey");
+    }
+
+    private void RebuildJourney()
+    {
+        Journey.Clear();
+        var score = _state.Points - _state.Events.Sum(item => item.Points);
+        var ranked = score != 0;
+        var prev = Rewards.RankFromScore(score, ranked);
+        foreach (var item in _state.Events)
+        {
+            score += item.Points;
+            ranked = true;
+            var rank = Rewards.RankFromScore(score, ranked);
+            var letter = rank != prev ? rank : "";
+            prev = rank;
+            var when = DateTime.TryParse(item.At, out var at)
+                ? at.ToString("d MMM HH:mm")
+                : item.At;
+            var points = item.Points > 0 ? $"+{item.Points}" : $"{item.Points}";
+            Journey.Add(new RewardItem(item.Message, when, points, letter));
+        }
+        Raise(nameof(HasJourney));
+    }
+
     private void RaiseRank()
     {
         Raise(nameof(RankText));
@@ -482,7 +517,7 @@ internal sealed class MainViewModel : ObservableObject
         };
         var already = _state.Cooldowns.Any(c => c.Enabled);
         _state.Cooldowns.Add(entry);
-        Rewards.NoteCooldownStarted(_state, already);
+        Rewards.NoteCooldownStarted(_state, already, name);
         Storage.Save(_state);
         var game = _selected.Game;
         Task.Run(() =>
@@ -523,7 +558,7 @@ internal sealed class MainViewModel : ObservableObject
     {
         if (_active is null) return;
         var name = _active.Game.Name;
-        Rewards.NoteTakenOff(_state);
+        Rewards.NoteTakenOff(_state, name);
         _state.Cooldowns = _state.Cooldowns.Where(c => c.Id != _active.Id).ToList();
         Storage.Save(_state);
         Task.Run(() => Scheduler.EnsureBackgroundTasks(_state));
@@ -810,6 +845,11 @@ internal sealed class MainViewModel : ObservableObject
 
     public void CloseModal()
     {
+        if (_modal == "journey")
+        {
+            SetModal("progress");
+            return;
+        }
         SetModal("none");
         _selected = null;
         _active = null;
@@ -824,6 +864,7 @@ internal sealed class MainViewModel : ObservableObject
         Raise(nameof(ModalTakeOff));
         Raise(nameof(ModalTakeOffWarn));
         Raise(nameof(ModalProgress));
+        Raise(nameof(ModalJourney));
         Raise(nameof(ModalSettings));
         Raise(nameof(ModalTitle));
         Raise(nameof(SelectedName));
