@@ -1,0 +1,109 @@
+<Window x:Class="Cooldown.SettingsWindowWin11"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Cooldown"
+        Title="Settings"
+        Width="320"
+        MaxHeight="560"
+        SizeToContent="Height"
+        FontFamily="Segoe UI Variable Text, Segoe UI"
+        FontSize="13"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        WindowStartupLocation="CenterOwner"
+        Icon="pack://application:,,,/Assets/hourglass.ico"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Win11Light.xaml"/>
+                <ResourceDictionary Source="Themes/Win11.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <local:BoolVis x:Key="BoolVis"/>
+            <local:BoolVis x:Key="InvVis" Invert="True"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Window.Style>
+        <Style TargetType="local:SettingsWindowWin11">
+            <Setter Property="Background" Value="{DynamicResource Face}"/>
+            <Setter Property="Foreground" Value="{DynamicResource WindowText}"/>
+        </Style>
+    </Window.Style>
+    <Border Background="{DynamicResource Face}" Padding="20,12,20,16">
+                <StackPanel>
+                    <DockPanel LastChildFill="True" Margin="0,0,0,16">
+                        <ComboBox DockPanel.Dock="Right"
+                                  Width="100"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Center"
+                                  Style="{StaticResource ClassicComboBox}"
+                                  ItemsSource="{Binding ThemeChoices}"
+                                  SelectedValue="{Binding SelectedTheme, Mode=TwoWay}"
+                                  SelectedValuePath="Id"
+                                  DisplayMemberPath="Label"/>
+                        <TextBlock Text="Theme" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <TextBlock Text="Watched folders" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="220"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding WatchFolders}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,4" LastChildFill="True" ToolTip="{Binding Key}">
+                                        <CheckBox DockPanel.Dock="Right" Style="{StaticResource TickOnly}"
+                                                  IsChecked="{Binding Enabled, Mode=TwoWay}"
+                                                  VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource TinyClose}"
+                                                VerticalAlignment="Center" Margin="8,0,0,0"
+                                                Visibility="{Binding IsCustom, Converter={StaticResource BoolVis}}"
+                                                Command="{Binding DataContext.RemoveWatchFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip="Remove this folder">
+                                            <Path Stroke="{DynamicResource WindowText}" StrokeThickness="1.4" Width="8" Height="8" Stretch="Uniform"
+                                                  Data="M0,0 L8,8 M8,0 L0,8"/>
+                                        </Button>
+                                        <TextBlock Text="{Binding Label}" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <TextBlock Text="Blacklist" FontWeight="SemiBold" Margin="0,16,0,8"/>
+                    <TextBlock Text="Nothing here yet." Foreground="{DynamicResource GrayText}"
+                               Visibility="{Binding HasBlacklist, Converter={StaticResource InvVis}}"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="180"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  Visibility="{Binding HasBlacklist, Converter={StaticResource BoolVis}}">
+                        <ItemsControl ItemsSource="{Binding Blacklist}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,4" LastChildFill="True">
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource TinyClose}"
+                                                VerticalAlignment="Center" Margin="8,0,0,0"
+                                                Command="{Binding DataContext.RemoveBlacklistCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <Path Stroke="{DynamicResource WindowText}" StrokeThickness="1.4" Width="8" Height="8" Stretch="Uniform"
+                                                  Data="M0,0 L8,8 M8,0 L0,8"/>
+                                        </Button>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <DockPanel Margin="0,20,0,0">
+                        <Button DockPanel.Dock="Right" Content="Close" MinWidth="88" Height="32"
+                                Style="{StaticResource AccentButton}"
+                                Command="{Binding CloseModalCommand}"/>
+                        <TextBlock/>
+                    </DockPanel>
+                </StackPanel>
+    </Border>
+</Window>

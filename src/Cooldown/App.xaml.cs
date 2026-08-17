@@ -52,7 +52,12 @@ public partial class App : Application
 
     private static Window CreateShell(MainViewModel vm)
     {
-        Window window = Theme.IsXp(vm.SelectedTheme) ? new MainWindowXp() : new MainWindow();
+        Window window = Theme.Normalize(vm.SelectedTheme) switch
+        {
+            Theme.Xp2001 => new MainWindowXp(),
+            Theme.Win112021 => new MainWindowWin11(),
+            _ => new MainWindow(),
+        };
         window.DataContext = vm;
         return window;
     }

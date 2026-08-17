@@ -102,6 +102,7 @@ internal sealed class MainViewModel : ObservableObject
     [
         new("1998", "1998"),
         new("2001", "2001"),
+        new("2021", "2021"),
     ];
     public ICommand OpenProgressCommand { get; }
     public ICommand OpenJourneyCommand { get; }
