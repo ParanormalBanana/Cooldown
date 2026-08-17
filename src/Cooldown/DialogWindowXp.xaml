@@ -1,0 +1,264 @@
+<Window x:Class="Cooldown.DialogWindowXp"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Cooldown"
+        Title="{Binding ModalTitle}"
+        Width="560"
+        MaxHeight="560"
+        SizeToContent="Height"
+        Background="#0831D9"
+        FontFamily="Tahoma"
+        FontSize="11"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        WindowStartupLocation="CenterOwner"
+        Icon="pack://application:,,,/Assets/hourglass.ico"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        Loaded="Window_Loaded"
+        SizeChanged="Window_SizeChanged">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/WinXp.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <local:BoolVis x:Key="BoolVis"/>
+            <local:BoolVis x:Key="InvVis" Invert="True"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Border x:Name="Root" CornerRadius="8,8,0,0" Background="#0831D9">
+        <DockPanel>
+            <Border x:Name="ModalCaption" DockPanel.Dock="Top" Height="30" CornerRadius="8,8,0,0"
+                    Background="{StaticResource ActiveCaptionFill}"
+                    MouseLeftButtonDown="Caption_MouseLeftButtonDown">
+                <Border CornerRadius="8,8,0,0" BorderBrush="#00138B" BorderThickness="1,1,0,0">
+                  <Border CornerRadius="7,7,0,0" BorderBrush="#001EA0" BorderThickness="0,0,1,0">
+                   <Grid>
+                    <Grid IsHitTestVisible="False">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                        </Grid.ColumnDefinitions>
+                        <Image Grid.Column="0" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/caption-left.png"/>
+                        <Image Grid.Column="1" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/caption-fill.png"/>
+                        <Image Grid.Column="2" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/caption-right.png"/>
+                    </Grid>
+                    <Grid Margin="4,2,4,2">
+                        <TextBlock Text="{Binding ModalTitle}" Foreground="White" FontWeight="Bold"
+                                   FontFamily="{StaticResource CaptionFont}" FontSize="13"
+                                   VerticalAlignment="Center" Margin="3,0,28,0"
+                                   TextTrimming="CharacterEllipsis"
+                                   IsHitTestVisible="False">
+                            <TextBlock.Effect>
+                                <DropShadowEffect Color="#0F1089" ShadowDepth="1" Direction="315" BlurRadius="0" Opacity="1"/>
+                            </TextBlock.Effect>
+                        </TextBlock>
+                        <Button Style="{StaticResource CloseButton}"
+                                VerticalAlignment="Center"
+                                Command="{Binding CloseModalCommand}"/>
+                    </Grid>
+                   </Grid>
+                  </Border>
+                </Border>
+            </Border>
+
+            <Border Background="#0831D9" Padding="3,0,3,3"
+                    BorderBrush="#001EA0" BorderThickness="1,0,1,1">
+                <Border Background="#ECE9D8">
+                    <Grid Margin="12,10,12,12">
+                                            <Grid Visibility="{Binding ModalProgress, Converter={StaticResource BoolVis}}">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <Grid>
+                                                    <TextBlock VerticalAlignment="Top"
+                                                               LineStackingStrategy="BlockLineHeight" LineHeight="118"
+                                                               Visibility="{Binding IsRanked, Converter={StaticResource BoolVis}}">
+                                                        <Run Text="My rank:"/>
+                                                        <Run FontSize="118" FontWeight="Bold" Text="&#x200B;"/>
+                                                    </TextBlock>
+                                                    <TextBlock VerticalAlignment="Top"
+                                                               Visibility="{Binding IsRanked, Converter={StaticResource InvVis}}">
+                                                        <Run Text="My rank:"/>
+                                                        <Run FontSize="16" FontWeight="Bold" Text="&#x200B;"/>
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding RankLetter}"
+                                                               FontSize="118" FontWeight="Bold" Foreground="#316AC5"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                               LineStackingStrategy="BlockLineHeight" LineHeight="118"
+                                                               Visibility="{Binding IsRanked, Converter={StaticResource BoolVis}}"/>
+                                                    <TextBlock Text="Unranked"
+                                                               FontSize="16" FontWeight="Bold" Foreground="#316AC5"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                               Visibility="{Binding IsRanked, Converter={StaticResource InvVis}}"/>
+                                                </Grid>
+                                                <DockPanel Grid.Row="2" Margin="0,0,0,4" LastChildFill="True">
+                                                    <Button DockPanel.Dock="Right" Content="{Binding ScoreText}" MinWidth="51" Height="23"
+                                                            Padding="8,1" Margin="8,0,0,0" FontWeight="Bold"
+                                                            Style="{StaticResource ClassicButton}"
+                                                            Command="{Binding OpenJourneyCommand}"/>
+                                                    <TextBlock Text="Score:" VerticalAlignment="Center"/>
+                                                </DockPanel>
+                                                <DockPanel Grid.Row="3" Margin="0,0,0,4" LastChildFill="True">
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding CurrentStreakText}"
+                                                               FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                                    <TextBlock Text="Current streak" VerticalAlignment="Center"/>
+                                                </DockPanel>
+                                                <DockPanel Grid.Row="4" LastChildFill="True">
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding BestStreakText}"
+                                                               FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                                    <TextBlock Text="Best streak" VerticalAlignment="Center"/>
+                                                </DockPanel>
+                                            </Grid>
+
+                                            <DockPanel Visibility="{Binding ModalJourney, Converter={StaticResource BoolVis}}"
+                                                       LastChildFill="True">
+                                                <TextBlock DockPanel.Dock="Top" Text="Nothing logged yet." Foreground="#5A574B"
+                                                           Margin="0,0,0,8"
+                                                           Visibility="{Binding HasJourney, Converter={StaticResource InvVis}}"/>
+                                                <Border Visibility="{Binding HasJourney, Converter={StaticResource BoolVis}}"
+                                                        BorderBrush="#7F9DB9" BorderThickness="1" Background="#FFFFFF">
+                                                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="320"
+                                                                  HorizontalScrollBarVisibility="Disabled">
+                                                        <ItemsControl ItemsSource="{Binding Journey}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid Margin="6,4">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                            <ColumnDefinition Width="Auto"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Grid.RowDefinitions>
+                                                                            <RowDefinition Height="Auto"/>
+                                                                            <RowDefinition Height="Auto"/>
+                                                                        </Grid.RowDefinitions>
+                                                                        <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
+                                                                                   VerticalAlignment="Center"/>
+                                                                        <TextBlock Grid.Column="1" Text="{Binding RankLetter}"
+                                                                                   FontWeight="Bold" Foreground="#316AC5"
+                                                                                   VerticalAlignment="Center"
+                                                                                   HorizontalAlignment="Center" Margin="8,0"/>
+                                                                        <TextBlock Grid.Column="2" Text="{Binding Points}"
+                                                                                   FontWeight="Bold" VerticalAlignment="Center"/>
+                                                                        <TextBlock Grid.Row="1" Text="{Binding When}"
+                                                                                   Foreground="#5A574B" FontSize="10"/>
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </ScrollViewer>
+                                                </Border>
+                                            </DockPanel>
+
+                                            <StackPanel Visibility="{Binding ModalPutOn, Converter={StaticResource BoolVis}}">
+                                                <Border Margin="0,0,0,10" BorderBrush="#7F9DB9" BorderThickness="1" Background="#3A6EA5">
+                                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch">
+                                                        <Grid Width="460" Height="215" Background="#3A6EA5">
+                                                            <Image Source="{Binding SelectedGame.Cover}" Stretch="Uniform"
+                                                                   RenderOptions.BitmapScalingMode="Fant"/>
+                                                        </Grid>
+                                                    </Viewbox>
+                                                </Border>
+                                                <TextBlock Text="Congrats!" FontSize="14" FontWeight="Bold"
+                                                           Margin="0,0,0,4"/>
+                                                <TextBlock Text="{Binding PutOnPrompt}" FontSize="12"
+                                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                           Margin="0,0,0,14"/>
+                                                <DockPanel>
+                                                    <Button DockPanel.Dock="Right" Content="Do it!" MinWidth="75" Height="23"
+                                                            Padding="12,1"
+                                                            Style="{StaticResource AccentButton}" Command="{Binding PutOnCooldownCommand}"/>
+                                                    <Button DockPanel.Dock="Right" Content="On second thought..." MinWidth="75" Height="23"
+                                                            Padding="12,1" Margin="0,0,6,0"
+                                                            Style="{StaticResource GhostButton}"
+                                                            Command="{Binding WarnSkipPutOnCommand}"/>
+                                                    <TextBlock/>
+                                                </DockPanel>
+                                            </StackPanel>
+
+                                            <StackPanel Visibility="{Binding ModalPutOnWarn, Converter={StaticResource BoolVis}}">
+                                                <TextBlock Text="Wait! You were so close!"
+                                                           FontSize="12" FontWeight="Bold"
+                                                           TextWrapping="Wrap"/>
+                                                <TextBlock FontSize="12" TextWrapping="Wrap" Margin="0,6,0,14">
+                                                    <Run Text="Give it another thought"/>
+                                                    <InlineUIContainer BaselineAlignment="Center">
+                                                        <Image Width="19" Height="19" Margin="4,0,0,0"
+                                                               VerticalAlignment="Center"
+                                                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                                               Source="pack://application:,,,/Assets/Xp/msn-smile.png"/>
+                                                    </InlineUIContainer>
+                                                </TextBlock>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                    <Button Content="sorry bro" MinWidth="75" Height="23"
+                                                            Padding="12,1" Margin="0,0,6,0"
+                                                            Style="{StaticResource GhostButton}"
+                                                            Command="{Binding CloseModalCommand}"/>
+                                                    <Button Content="alr, you got me" MinWidth="75" Height="23"
+                                                            Padding="12,1"
+                                                            Style="{StaticResource AccentButton}"
+                                                            Command="{Binding CancelPutOnWarnCommand}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <StackPanel Visibility="{Binding ModalTakeOff, Converter={StaticResource BoolVis}}">
+                                                <Border Margin="0,0,0,10" BorderBrush="#7F9DB9" BorderThickness="1" Background="#3A6EA5">
+                                                    <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch">
+                                                        <Grid Width="460" Height="215" Background="#3A6EA5">
+                                                            <Image Source="{Binding SelectedGame.Cover}" Stretch="Uniform"
+                                                                   RenderOptions.BitmapScalingMode="Fant"/>
+                                                        </Grid>
+                                                    </Viewbox>
+                                                </Border>
+                                                <TextBlock Text="{Binding TakeOffPrompt}" FontSize="12" FontWeight="Bold"
+                                                           TextWrapping="Wrap"/>
+                                                <TextBlock Text="... wait, what are you doing?" FontSize="12"
+                                                           TextWrapping="Wrap" Margin="0,6,0,14"/>
+                                                <DockPanel>
+                                                    <Button DockPanel.Dock="Right" Content="Perfect" MinWidth="75" Height="23"
+                                                            Padding="12,1"
+                                                            Style="{StaticResource AccentButton}"
+                                                            Command="{Binding CloseModalCommand}"/>
+                                                    <Button DockPanel.Dock="Right" Content="About that..." MinWidth="75" Height="23"
+                                                            Padding="12,1" Margin="0,0,6,0"
+                                                            Style="{StaticResource GhostButton}"
+                                                            Command="{Binding WarnTakeOffCommand}"/>
+                                                    <TextBlock/>
+                                                </DockPanel>
+                                            </StackPanel>
+
+                                            <StackPanel Visibility="{Binding ModalTakeOffWarn, Converter={StaticResource BoolVis}}">
+                                                <TextBlock Text="Don't do it! You're better than that!"
+                                                           FontSize="12" FontWeight="Bold"
+                                                           TextWrapping="Wrap" Margin="0,0,0,14"/>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                    <Button Content="take it off cooldown" MinWidth="75" Height="23"
+                                                            Padding="12,1" Margin="0,0,6,0"
+                                                            Style="{StaticResource DangerButton}"
+                                                            Command="{Binding TakeOffCooldownCommand}"/>
+                                                    <Button Content="Just kidding!" MinWidth="75" Height="23"
+                                                            Padding="12,1"
+                                                            Style="{StaticResource AccentButton}"
+                                                            Command="{Binding CancelTakeOffWarnCommand}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                </Border>
+            </Border>
+        </DockPanel>
+    </Border>
+</Window>

@@ -30,4 +30,5 @@ public sealed class AppState
     [JsonPropertyName("cooldowns_on_top")] public bool CooldownsOnTop { get; set; }
     [JsonPropertyName("disabled_sources")] public List<string> DisabledSources { get; set; } = [];
     [JsonPropertyName("disabled_scan_dirs")] public List<string> DisabledScanDirs { get; set; } = [];
+    [JsonPropertyName("theme")] public string Theme { get; set; } = "1998";
 }

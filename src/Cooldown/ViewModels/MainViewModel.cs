@@ -98,6 +98,11 @@ internal sealed class MainViewModel : ObservableObject
     public ObservableCollection<WatchFolderItem> WatchFolders { get; }
     public ObservableCollection<BlacklistItem> Blacklist { get; }
     public ObservableCollection<RewardItem> Journey { get; }
+    public IReadOnlyList<ThemeChoice> ThemeChoices { get; } =
+    [
+        new("1998", "1998"),
+        new("2001", "2001"),
+    ];
     public ICommand OpenProgressCommand { get; }
     public ICommand OpenJourneyCommand { get; }
     public ICommand OpenLibraryCommand { get; }
@@ -147,6 +152,20 @@ internal sealed class MainViewModel : ObservableObject
     public string BestStreakText => $"{_state.BestStreakDays} days";
 
     public bool ShowHidden { get => _showHidden; private set => Set(ref _showHidden, value); }
+    public string SelectedTheme
+    {
+        get => Theme.Normalize(_state.Theme);
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            var id = Theme.Normalize(value);
+            if (id == Theme.Normalize(_state.Theme)) return;
+            _state.Theme = id;
+            Storage.Save(_state);
+            Raise();
+            App.RecreateShell();
+        }
+    }
     public bool CooldownsOnTop
     {
         get => _state.CooldownsOnTop;
@@ -904,3 +923,6 @@ internal sealed class RelayCommand : ICommand
     public bool CanExecute(object? parameter) => _can?.Invoke(parameter) ?? true;
     public void Execute(object? parameter) => _execute(parameter);
 }
+
+internal sealed record ThemeChoice(string Id, string Label);
+

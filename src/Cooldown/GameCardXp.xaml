@@ -1,0 +1,123 @@
+<UserControl x:Class="Cooldown.GameCardXp"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Cooldown"
+             Cursor="Hand"
+             FontFamily="Tahoma"
+             UseLayoutRounding="True"
+             HorizontalAlignment="Stretch">
+    <UserControl.Resources>
+        <local:BoolVis x:Key="BoolVis"/>
+        <local:BoolVis x:Key="InvVis" Invert="True"/>
+        <local:GrayCover x:Key="GrayCover"/>
+        <local:AnyTrueVis x:Key="AnyTrueVis"/>
+        <local:AnyTrueVis x:Key="NoneTrueVis" Invert="True"/>
+    </UserControl.Resources>
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsHidden}" Value="True">
+                    <Setter Property="Opacity" Value="0.72"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
+    <UserControl.ContextMenu>
+        <ContextMenu Opened="CardMenu_Opened"
+                     DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+            <ContextMenu.Resources>
+                <ResourceDictionary>
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceDictionary Source="Themes/WinXp.xaml"/>
+                    </ResourceDictionary.MergedDictionaries>
+                    <local:BoolVis x:Key="BoolVis"/>
+                    <local:BoolVis x:Key="InvVis" Invert="True"/>
+                </ResourceDictionary>
+            </ContextMenu.Resources>
+            <MenuItem Header="Hide game" Click="Hide_Click"
+                      Visibility="{Binding IsHidden, Converter={StaticResource InvVis}}"/>
+            <MenuItem Header="Unhide game" Click="Unhide_Click"
+                      Visibility="{Binding IsHidden, Converter={StaticResource BoolVis}}"/>
+            <MenuItem Header="Not a game" Click="NotAGame_Click"/>
+            <Separator/>
+            <MenuItem x:Name="ToggleHiddenItem" Header="Show hidden games" IsCheckable="True"
+                      Click="ToggleHidden_Click"/>
+            <MenuItem x:Name="ToggleCooldownsOnTopItem" Header="Cooldown games on top" IsCheckable="True"
+                      Click="ToggleCooldownsOnTop_Click"/>
+            <Separator/>
+            <MenuItem Header="Settings..." Click="Settings_Click"/>
+        </ContextMenu>
+    </UserControl.ContextMenu>
+    <Border x:Name="Root" Background="Transparent" BorderThickness="0"
+            SnapsToDevicePixels="True" UseLayoutRounding="True"
+            HorizontalAlignment="Stretch"
+            MouseLeftButtonDown="Card_MouseLeftButtonDown"
+            MouseLeftButtonUp="Card_MouseLeftButtonUp"
+            LostMouseCapture="Card_LostMouseCapture">
+        <Border x:Name="PressShift">
+            <StackPanel>
+                <Border x:Name="Banner" Margin="4,4,6,4" Background="#3A6EA5">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" Direction="315" ShadowDepth="2"
+                                          BlurRadius="2" Opacity="0.45" RenderingBias="Quality"/>
+                    </Border.Effect>
+                    <Grid Height="{Binding DataContext.CoverHeight, RelativeSource={RelativeSource AncestorType=Window}}"
+                          ClipToBounds="True">
+                        <Image Stretch="UniformToFill"
+                               RenderOptions.BitmapScalingMode="Fant"
+                               Source="{Binding Cover}">
+                            <Image.Visibility>
+                                <MultiBinding Converter="{StaticResource NoneTrueVis}">
+                                    <Binding Path="OnCooldown"/>
+                                    <Binding Path="DataContext.ModalOpen" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                </MultiBinding>
+                            </Image.Visibility>
+                        </Image>
+                        <Image Stretch="UniformToFill"
+                               RenderOptions.BitmapScalingMode="Fant"
+                               Source="{Binding Cover, Converter={StaticResource GrayCover}}">
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.75"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding OnCooldown}" Value="True">
+                                            <Setter Property="Opacity" Value="0.55"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                            <Image.Visibility>
+                                <MultiBinding Converter="{StaticResource AnyTrueVis}">
+                                    <Binding Path="OnCooldown"/>
+                                    <Binding Path="DataContext.ModalOpen" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                </MultiBinding>
+                            </Image.Visibility>
+                        </Image>
+                        <Image Width="16" Height="16" HorizontalAlignment="Right" VerticalAlignment="Top"
+                               Margin="6" Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/hourglass-16.png"
+                               Visibility="{Binding OnCooldown, Converter={StaticResource BoolVis}}"/>
+                    </Grid>
+                </Border>
+                <TextBlock Text="{Binding Title}" FontSize="11"
+                           TextAlignment="Center" TextTrimming="CharacterEllipsis"
+                           Margin="6,2,6,10">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                            <Setter Property="Foreground" Value="#000000"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding OnCooldown}" Value="True">
+                                    <Setter Property="Foreground" Value="#5A574B"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DataContext.ModalOpen, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                    <Setter Property="Foreground" Value="#5A574B"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+    </Border>
+</UserControl>

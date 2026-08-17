@@ -1,32 +1,28 @@
 using System.ComponentModel;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using Cooldown.Themes;
 using Cooldown.ViewModels;
 
 namespace Cooldown;
 
-public partial class MainWindow : Window
+public partial class MainWindowXp : Window
 {
     private const int WmNcHitTest = 0x0084;
     private const int WmNcMouseLeave = 0x02A2;
     private const int HtMaxButton = 9;
-    private const int DwmwaUseImmersiveDarkMode = 20;
-    private const int DwmwaWindowCornerPreference = 33;
-    private const int DwmwaBorderColor = 34;
-    private const int DwmwcpDoNotRound = 1;
-    private const int BorderColor = 0x00C0C0C0;
 
     private Window? _dialog;
     private bool _syncingDialog;
 
-    public MainWindow()
+    public MainWindowXp()
     {
         InitializeComponent();
         SourceInitialized += (_, _) =>
         {
-            EnableCustomChrome();
+            XpChrome.Enable(this);
+            XpChrome.ApplyTopRoundRegion(this);
             var hwnd = new WindowInteropHelper(this).Handle;
             var source = HwndSource.FromHwnd(hwnd);
             source?.AddHook(WndProc);
@@ -78,8 +74,8 @@ public partial class MainWindow : Window
     {
         if (_dialog != null) return;
         Window window = DataContext is MainViewModel { ModalSettings: true }
-            ? new SettingsWindow()
-            : new DialogWindow();
+            ? new SettingsWindowXp()
+            : new DialogWindowXp();
         window.Owner = this;
         window.DataContext = DataContext;
         window.Closed += (_, _) =>
@@ -106,6 +102,7 @@ public partial class MainWindow : Window
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        XpChrome.ApplyTopRoundRegion(this);
         if (DataContext is MainViewModel vm)
             vm.SetViewportWidth(GameList.ActualWidth > 0 ? GameList.ActualWidth : ActualWidth - 48);
     }
@@ -142,28 +139,14 @@ public partial class MainWindow : Window
 
     private void ApplyMaximizedLayout()
     {
-        Root.Margin = WindowState == WindowState.Maximized ? new Thickness(8) : new Thickness(0);
-        MaxIcon.Visibility = WindowState == WindowState.Maximized ? Visibility.Collapsed : Visibility.Visible;
-        RestoreIcon.Visibility = WindowState == WindowState.Maximized ? Visibility.Visible : Visibility.Collapsed;
-        MaxButton.ToolTip = WindowState == WindowState.Maximized ? "Restore" : "Maximize";
-    }
-
-    private void EnableCustomChrome()
-    {
-        try
-        {
-            var hwnd = new WindowInteropHelper(this).Handle;
-            var dark = 0;
-            DwmSetWindowAttribute(hwnd, DwmwaUseImmersiveDarkMode, ref dark, sizeof(int));
-            var round = DwmwcpDoNotRound;
-            DwmSetWindowAttribute(hwnd, DwmwaWindowCornerPreference, ref round, sizeof(int));
-            var border = BorderColor;
-            DwmSetWindowAttribute(hwnd, DwmwaBorderColor, ref border, sizeof(int));
-        }
-        catch
-        {
-            // older Windows
-        }
+        var max = WindowState == WindowState.Maximized;
+        Root.Margin = max ? new Thickness(8) : new Thickness(0);
+        Root.CornerRadius = max ? new CornerRadius(0) : new CornerRadius(XpChrome.CornerDip, XpChrome.CornerDip, 0, 0);
+        CaptionBar.CornerRadius = Root.CornerRadius;
+        MaxIcon.Visibility = max ? Visibility.Collapsed : Visibility.Visible;
+        RestoreIcon.Visibility = max ? Visibility.Visible : Visibility.Collapsed;
+        MaxButton.ToolTip = max ? "Restore" : "Maximize";
+        XpChrome.ApplyTopRoundRegion(this);
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -188,7 +171,4 @@ public partial class MainWindow : Window
         var local = MaxButton.PointFromScreen(dip);
         return local.X >= 0 && local.Y >= 0 && local.X <= MaxButton.ActualWidth && local.Y <= MaxButton.ActualHeight;
     }
-
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
 }

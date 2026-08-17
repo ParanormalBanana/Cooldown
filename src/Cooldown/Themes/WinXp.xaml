@@ -1,0 +1,809 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
+
+    <SolidColorBrush x:Key="Face" Color="#ECE9D8"/>
+    <SolidColorBrush x:Key="Highlight" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Shadow" Color="#ACA899"/>
+    <SolidColorBrush x:Key="DkShadow" Color="#716F64"/>
+    <SolidColorBrush x:Key="WindowBg" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="WindowText" Color="#000000"/>
+    <SolidColorBrush x:Key="Caption" Color="#0054E3"/>
+    <SolidColorBrush x:Key="CaptionText" Color="#FFFFFF"/>
+    <LinearGradientBrush x:Key="ActiveCaptionFill" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#0058EE" Offset="0"/>
+        <GradientStop Color="#3593FF" Offset="0.04"/>
+        <GradientStop Color="#288EFF" Offset="0.06"/>
+        <GradientStop Color="#127DFF" Offset="0.08"/>
+        <GradientStop Color="#036FFC" Offset="0.10"/>
+        <GradientStop Color="#0262EE" Offset="0.14"/>
+        <GradientStop Color="#0057E5" Offset="0.20"/>
+        <GradientStop Color="#0054E3" Offset="0.24"/>
+        <GradientStop Color="#0055EB" Offset="0.56"/>
+        <GradientStop Color="#005BF5" Offset="0.66"/>
+        <GradientStop Color="#026AFE" Offset="0.76"/>
+        <GradientStop Color="#0062EF" Offset="0.86"/>
+        <GradientStop Color="#0052D6" Offset="0.92"/>
+        <GradientStop Color="#0040AB" Offset="0.94"/>
+        <GradientStop Color="#003092" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="InactiveCaptionFill" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#7697E7" Offset="0"/>
+        <GradientStop Color="#7E9EE3" Offset="0.03"/>
+        <GradientStop Color="#94AFE8" Offset="0.06"/>
+        <GradientStop Color="#97B4E9" Offset="0.08"/>
+        <GradientStop Color="#82A5E4" Offset="0.14"/>
+        <GradientStop Color="#7C9FE2" Offset="0.17"/>
+        <GradientStop Color="#7996DE" Offset="0.25"/>
+        <GradientStop Color="#7B99E1" Offset="0.56"/>
+        <GradientStop Color="#82A9E9" Offset="0.81"/>
+        <GradientStop Color="#80A5E7" Offset="0.89"/>
+        <GradientStop Color="#7B96E1" Offset="0.94"/>
+        <GradientStop Color="#7A93DF" Offset="0.97"/>
+        <GradientStop Color="#ABBAE3" Offset="1"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Desktop" Color="#3A6EA5"/>
+    <SolidColorBrush x:Key="ActiveFrameFill" Color="#0831D9"/>
+    <SolidColorBrush x:Key="InactiveFrameFill" Color="#7B99E1"/>
+    <SolidColorBrush x:Key="ActiveFrameEdge" Color="#001EA0"/>
+    <SolidColorBrush x:Key="InactiveFrameEdge" Color="#6A84C8"/>
+    <SolidColorBrush x:Key="ActiveCaptionEdge" Color="#00138B"/>
+    <SolidColorBrush x:Key="InactiveCaptionEdge" Color="#6D84D4"/>
+    <SolidColorBrush x:Key="HotTrack" Color="#316AC5"/>
+    <SolidColorBrush x:Key="Tooltip" Color="#FFFFE1"/>
+    <SolidColorBrush x:Key="Light" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="GrayText" Color="#5A574B"/>
+    <FontFamily x:Key="UiFont">Tahoma, Trebuchet MS, Segoe UI</FontFamily>
+    <FontFamily x:Key="CaptionFont">Trebuchet MS, Tahoma, Segoe UI</FontFamily>
+
+    <LinearGradientBrush x:Key="XpButtonFill" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFFFF" Offset="0"/>
+        <GradientStop Color="#ECEBE5" Offset="0.86"/>
+        <GradientStop Color="#D8D0C4" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="XpButtonPressed" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#CDCAC3" Offset="0"/>
+        <GradientStop Color="#E3E3DB" Offset="0.08"/>
+        <GradientStop Color="#E5E5DE" Offset="0.94"/>
+        <GradientStop Color="#F2F2F1" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="XpCardFill" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFFFF" Offset="0"/>
+        <GradientStop Color="#ECE9D8" Offset="0.55"/>
+        <GradientStop Color="#D6D3C2" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="XpProgressFill" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#ACEDAD" Offset="0"/>
+        <GradientStop Color="#4CDA50" Offset="0.28"/>
+        <GradientStop Color="#2ED330" Offset="0.42"/>
+        <GradientStop Color="#76E275" Offset="0.71"/>
+        <GradientStop Color="#FFFFFF" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="XpThumbFill" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#EAF2FC" Offset="0"/>
+        <GradientStop Color="#8AACE3" Offset="0.42"/>
+        <GradientStop Color="#4F7EC8" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="XpScrollArrowFill" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#EAF2FC" Offset="0"/>
+        <GradientStop Color="#9BB6E8" Offset="0.5"/>
+        <GradientStop Color="#6B94D4" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="XpScrollHotFill" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFCF0" Offset="0"/>
+        <GradientStop Color="#FFD56A" Offset="0.48"/>
+        <GradientStop Color="#E8A01A" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="XpScrollThumbHotFill" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FFFCF0" Offset="0"/>
+        <GradientStop Color="#FFD56A" Offset="0.48"/>
+        <GradientStop Color="#E8A01A" Offset="1"/>
+    </LinearGradientBrush>
+    <DrawingBrush x:Key="Dither" TileMode="Tile" Viewport="0,0,2,2" ViewportUnits="Absolute" Stretch="None">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#F3F5FA" Geometry="M0,0 H2 V2 H0 Z"/>
+                <GeometryDrawing Brush="#D8DEEC" Geometry="M0,0 H1 V1 H0 Z M1,1 H2 V2 H1 Z"/>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <Style TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    </Style>
+
+    <Style x:Key="ClassicButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource XpButtonFill}"/>
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="8,1"/>
+        <Setter Property="MinHeight" Value="23"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Outer" CornerRadius="3" BorderBrush="#003C74" BorderThickness="1"
+                            Background="{StaticResource XpButtonFill}">
+                        <Border x:Name="Glow" CornerRadius="2" BorderThickness="0" Background="Transparent">
+                            <Border x:Name="PressShift">
+                                <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"
+                                                  TextElement.Foreground="{TemplateBinding Foreground}"/>
+                            </Border>
+                        </Border>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Glow" Property="BorderThickness" Value="2"/>
+                            <Setter TargetName="Glow" Property="BorderBrush" Value="#FDD889"/>
+                            <Setter TargetName="Outer" Property="BorderBrush" Value="#E5A01A"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Outer" Property="Background" Value="{StaticResource XpButtonPressed}"/>
+                            <Setter TargetName="Glow" Property="BorderThickness" Value="0"/>
+                            <Setter TargetName="Outer" Property="BorderBrush" Value="#003C74"/>
+                            <Setter TargetName="PressShift" Property="Margin" Value="1,1,-1,-1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="#ACA899"/>
+                            <Setter TargetName="Outer" Property="BorderBrush" Value="#ACA899"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="GhostButton" TargetType="Button" BasedOn="{StaticResource ClassicButton}"/>
+
+    <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource ClassicButton}">
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Ring" CornerRadius="3" BorderBrush="#003C74" BorderThickness="1">
+                        <Border x:Name="Outer" CornerRadius="2" BorderBrush="#89ADE4" BorderThickness="1"
+                                Background="{StaticResource XpButtonFill}">
+                            <Border x:Name="PressShift">
+                                <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"
+                                                  TextElement.Foreground="{TemplateBinding Foreground}"/>
+                            </Border>
+                        </Border>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Outer" Property="BorderBrush" Value="#FDD889"/>
+                            <Setter TargetName="Ring" Property="BorderBrush" Value="#E5A01A"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Outer" Property="Background" Value="{StaticResource XpButtonPressed}"/>
+                            <Setter TargetName="PressShift" Property="Margin" Value="1,1,-1,-1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="#ACA899"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ClassicButton}"/>
+
+    <Style x:Key="XpImageButton" TargetType="Button">
+        <Setter Property="Width" Value="21"/>
+        <Setter Property="Height" Value="21"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="2,0,0,0"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="XpCaptionMin" TargetType="Button" BasedOn="{StaticResource XpImageButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid SnapsToDevicePixels="True">
+                        <Image Width="21" Height="21" Stretch="Fill"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/minimize.png"/>
+                        <Image x:Name="Hover" Width="21" Height="21" Stretch="Fill" Opacity="0"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/minimize-hover.png"/>
+                        <Image x:Name="Active" Width="21" Height="21" Stretch="Fill" Opacity="0"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/minimize-active.png"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Hover" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Active" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="CaptionButton" TargetType="Button" BasedOn="{StaticResource XpCaptionMin}"/>
+    <Style x:Key="XpCaptionMax" TargetType="Button" BasedOn="{StaticResource XpImageButton}"/>
+    <Style x:Key="CaptionCloseButton" TargetType="Button" BasedOn="{StaticResource XpImageButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid SnapsToDevicePixels="True">
+                        <Image Width="21" Height="21" Stretch="Fill"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/close.png"/>
+                        <Image x:Name="Hover" Width="21" Height="21" Stretch="Fill" Opacity="0"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/close-hover.png"/>
+                        <Image x:Name="Active" Width="21" Height="21" Stretch="Fill" Opacity="0"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/close-active.png"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Hover" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Active" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="CloseButton" TargetType="Button" BasedOn="{StaticResource CaptionCloseButton}">
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="Margin" Value="0,0,2,0"/>
+    </Style>
+
+    <Style TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBox">
+                    <ScrollViewer Focusable="False"
+                                  Background="{TemplateBinding Background}"
+                                  Padding="{TemplateBinding Padding}"
+                                  CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}"
+                                  HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                                  VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                        <ItemsPresenter/>
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TinyClose" TargetType="Button" BasedOn="{StaticResource ClassicButton}">
+        <Setter Property="Width" Value="15"/>
+        <Setter Property="Height" Value="15"/>
+        <Setter Property="MinHeight" Value="15"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="ToolTip" Value="Remove"/>
+    </Style>
+
+    <Style TargetType="CheckBox">
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="Box" Width="13" Height="13" VerticalAlignment="Center" CornerRadius="1"
+                                BorderBrush="#1D5281" BorderThickness="1">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#DCDCD7" Offset="0"/>
+                                    <GradientStop Color="#FFFFFF" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Path x:Name="Mark" Data="M1,5 L4,8 L10,1" Stretch="Uniform"
+                                  Margin="1" Stroke="#003C74" StrokeThickness="1.6"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  Visibility="Hidden"/>
+                        </Border>
+                        <ContentPresenter Margin="6,0,0,0" VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush" Value="#E5A01A"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="#ACA899"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TickOnly" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Border x:Name="Box" Width="13" Height="13" VerticalAlignment="Center" CornerRadius="1"
+                            BorderBrush="#1D5281" BorderThickness="1">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#DCDCD7" Offset="0"/>
+                                <GradientStop Color="#FFFFFF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Path x:Name="Mark" Data="M1,5 L4,8 L10,1" Stretch="Uniform"
+                              Margin="1" Stroke="#003C74" StrokeThickness="1.6"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Visibility="Hidden"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush" Value="#E5A01A"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="CaretBrush" Value="#000000"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Padding" Value="4,3"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Outer" BorderBrush="#7F9DB9" BorderThickness="1" Background="#FFFFFF">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="2,1"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="#ACA899"/>
+                            <Setter TargetName="Outer" Property="Background" Value="#ECE9D8"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ContextMenu">
+        <Setter Property="Background" Value="#ECE9D8"/>
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HasDropShadow" Value="False"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border BorderBrush="#0054E3" BorderThickness="1" Background="#ECE9D8">
+                        <Border BorderBrush="#FFFFFF" BorderThickness="1">
+                            <StackPanel IsItemsHost="True" Margin="1"/>
+                        </Border>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="MenuItem">
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Padding" Value="8,3,4,3"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Bd" Background="Transparent">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="18"/>
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter ContentSource="Header"
+                                              Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Left" VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                            <Path x:Name="Check" Grid.Column="1" Width="8" Height="8" Stretch="Uniform"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Stroke="{TemplateBinding Foreground}" StrokeThickness="1.7"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                  Data="M0,4 L3,7 L8,0" Visibility="Hidden"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#316AC5"/>
+                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Separator">
+        <Setter Property="Margin" Value="2,4"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Height="2" BorderBrush="#ACA899" BorderThickness="0,1,0,0" Background="#FFFFFF"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Scrollbar sprites are the Luna bitmaps at the 21px metric, 9-sliced from the
+         17px originals the same way msstyles SizingMargins did. See tools/gen-luna-scrollbar.ps1. -->
+    <ImageBrush x:Key="XpTrackV" ImageSource="pack://application:,,,/Assets/Xp/scroll-track.png"
+                TileMode="Tile" Viewport="0,0,21,1" ViewportUnits="Absolute" Stretch="None"/>
+    <ImageBrush x:Key="XpTrackH" ImageSource="pack://application:,,,/Assets/Xp/scroll-track-h.png"
+                TileMode="Tile" Viewport="0,0,1,21" ViewportUnits="Absolute" Stretch="None"/>
+
+    <Style x:Key="ClassicThumb" TargetType="Thumb">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="MinHeight" Value="18"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid SnapsToDevicePixels="True" UseLayoutRounding="True" ClipToBounds="True">
+                        <Grid.Background>
+                            <ImageBrush ImageSource="pack://application:,,,/Assets/Xp/scroll-thumb-mid.png"
+                                        TileMode="Tile" Viewport="0,0,21,1" ViewportUnits="Absolute" Stretch="None"/>
+                        </Grid.Background>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="5"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="5"/>
+                        </Grid.RowDefinitions>
+                        <Image Grid.Row="0" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-top.png"/>
+                        <Image Grid.Row="4" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-bot.png"/>
+                        <Grid Grid.Row="2" IsHitTestVisible="False">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="9"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Image Grid.Column="1" Stretch="Fill" SnapsToDevicePixels="True"
+                                   RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                   Source="pack://application:,,,/Assets/Xp/scroll-grip.png"/>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ClassicThumbH" TargetType="Thumb">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="MinWidth" Value="18"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid SnapsToDevicePixels="True" UseLayoutRounding="True" ClipToBounds="True">
+                        <Grid.Background>
+                            <ImageBrush ImageSource="pack://application:,,,/Assets/Xp/scroll-thumb-mid-h.png"
+                                        TileMode="Tile" Viewport="0,0,1,21" ViewportUnits="Absolute" Stretch="None"/>
+                        </Grid.Background>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="5"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="5"/>
+                        </Grid.ColumnDefinitions>
+                        <Image Grid.Column="0" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-left.png"/>
+                        <Image Grid.Column="4" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-right.png"/>
+                        <Grid Grid.Column="2" IsHitTestVisible="False">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="9"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Image Grid.Row="1" Stretch="Fill" SnapsToDevicePixels="True"
+                                   RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                   Source="pack://application:,,,/Assets/Xp/scroll-grip-h.png"/>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ArrowRepeat" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <ContentPresenter/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TrackRepeat" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Background="Transparent"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <ControlTemplate x:Key="VerticalClassicBar" TargetType="ScrollBar">
+        <Grid Width="21" SnapsToDevicePixels="True" Background="{StaticResource XpTrackV}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="21"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="21"/>
+            </Grid.RowDefinitions>
+            <RepeatButton Grid.Row="0" Width="21" Height="21" Command="ScrollBar.LineUpCommand"
+                          Style="{StaticResource ArrowRepeat}">
+                <Image Width="21" Height="21" Stretch="None" SnapsToDevicePixels="True"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       Source="pack://application:,,,/Assets/Xp/scroll-arrow-up.png"/>
+            </RepeatButton>
+            <Track x:Name="PART_Track" Grid.Row="1" IsDirectionReversed="True">
+                <Track.DecreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource TrackRepeat}"/>
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                    <Thumb Style="{StaticResource ClassicThumb}"/>
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource TrackRepeat}"/>
+                </Track.IncreaseRepeatButton>
+            </Track>
+            <RepeatButton Grid.Row="2" Width="21" Height="21" Command="ScrollBar.LineDownCommand"
+                          Style="{StaticResource ArrowRepeat}">
+                <Image Width="21" Height="21" Stretch="None" SnapsToDevicePixels="True"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       Source="pack://application:,,,/Assets/Xp/scroll-arrow-down.png"/>
+            </RepeatButton>
+            <Border x:Name="DisabledWash" Grid.Row="0" Grid.RowSpan="3"
+                    Background="#C0ECE9D8" IsHitTestVisible="False" Visibility="Collapsed"/>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="DisabledWash" Property="Visibility" Value="Visible"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="HorizontalClassicBar" TargetType="ScrollBar">
+        <Grid Height="21" SnapsToDevicePixels="True" Background="{StaticResource XpTrackH}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="21"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="21"/>
+            </Grid.ColumnDefinitions>
+            <RepeatButton Grid.Column="0" Width="21" Height="21" Command="ScrollBar.LineLeftCommand"
+                          Style="{StaticResource ArrowRepeat}">
+                <Image Width="21" Height="21" Stretch="None" SnapsToDevicePixels="True"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       Source="pack://application:,,,/Assets/Xp/scroll-arrow-left.png"/>
+            </RepeatButton>
+            <Track x:Name="PART_Track" Grid.Column="1">
+                <Track.DecreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource TrackRepeat}"/>
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                    <Thumb Style="{StaticResource ClassicThumbH}"/>
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource TrackRepeat}"/>
+                </Track.IncreaseRepeatButton>
+            </Track>
+            <RepeatButton Grid.Column="2" Width="21" Height="21" Command="ScrollBar.LineRightCommand"
+                          Style="{StaticResource ArrowRepeat}">
+                <Image Width="21" Height="21" Stretch="None" SnapsToDevicePixels="True"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       Source="pack://application:,,,/Assets/Xp/scroll-arrow-right.png"/>
+            </RepeatButton>
+            <Border x:Name="DisabledWash" Grid.Column="0" Grid.ColumnSpan="3"
+                    Background="#C0ECE9D8" IsHitTestVisible="False" Visibility="Collapsed"/>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="DisabledWash" Property="Visibility" Value="Visible"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Stylus.IsPressAndHoldEnabled" Value="False"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Vertical">
+                <Setter Property="Width" Value="21"/>
+                <Setter Property="MinWidth" Value="21"/>
+                <Setter Property="MaxWidth" Value="21"/>
+                <Setter Property="Template" Value="{StaticResource VerticalClassicBar}"/>
+            </Trigger>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Height" Value="21"/>
+                <Setter Property="MinHeight" Value="21"/>
+                <Setter Property="MaxHeight" Value="21"/>
+                <Setter Property="Template" Value="{StaticResource HorizontalClassicBar}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="ProgressBar">
+        <Setter Property="Height" Value="15"/>
+        <Setter Property="Foreground" Value="#2ED330"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Border CornerRadius="4" BorderBrush="#686868" BorderThickness="1" Background="#FFFFFF" Padding="2,1">
+                        <Grid>
+                            <Rectangle x:Name="PART_Track" Fill="#FFFFFF"/>
+                            <Decorator x:Name="PART_Indicator" HorizontalAlignment="Left">
+                                <Border CornerRadius="2" Background="{StaticResource XpProgressFill}"/>
+                            </Decorator>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ClassicComboToggle" TargetType="ToggleButton">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="ClickMode" Value="Press"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border BorderBrush="#7F9DB9" BorderThickness="1" Background="#FFFFFF">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="17"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="1" Margin="0,1,1,1" CornerRadius="2"
+                                    BorderBrush="#003C74" BorderThickness="1"
+                                    Background="{StaticResource XpButtonFill}">
+                                <Path HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Fill="#000000" Data="M0,0 L7,0 L3.5,4 Z"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Padding" Value="4,2"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#316AC5"/>
+                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ClassicComboBox" TargetType="ComboBox">
+        <Setter Property="Height" Value="23"/>
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton Style="{StaticResource ClassicComboToggle}"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                        <ContentPresenter Margin="4,2,22,2" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                          IsHitTestVisible="False"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"/>
+                        <Popup x:Name="PART_Popup"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               Placement="Bottom"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               PopupAnimation="None">
+                            <Border BorderBrush="#0054E3" BorderThickness="1" Background="#ECE9D8">
+                                <Border BorderBrush="#FFFFFF" BorderThickness="1">
+                                    <ScrollViewer Margin="1" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <StackPanel IsItemsHost="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

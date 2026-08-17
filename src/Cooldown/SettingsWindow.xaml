@@ -36,12 +36,26 @@
                                 <Button Style="{StaticResource CloseButton}" Margin="0,2,3,0"
                                         VerticalAlignment="Center"
                                         Command="{Binding CloseModalCommand}">
-                                    <Path Stroke="#000000" StrokeThickness="1.6" Width="8" Height="8" Stretch="Uniform"
-                                          Data="M0,0 L8,8 M8,0 L0,8"/>
+                                    <Image Source="{StaticResource CaptionCloseGlyph}" Width="12" Height="10" Stretch="Fill"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                                 </Button>
                             </Grid>
 
                             <StackPanel Margin="12,10,12,12">
+                                <DockPanel LastChildFill="True" Margin="0,0,0,14">
+                                    <ComboBox DockPanel.Dock="Right"
+                                              Width="86"
+                                              HorizontalAlignment="Right"
+                                              VerticalAlignment="Center"
+                                              Style="{StaticResource ClassicComboBox}"
+                                              ItemsSource="{Binding ThemeChoices}"
+                                              SelectedValue="{Binding SelectedTheme, Mode=TwoWay}"
+                                              SelectedValuePath="Id"
+                                              DisplayMemberPath="Label"/>
+                                    <TextBlock Text="Theme" FontWeight="Bold" VerticalAlignment="Center"/>
+                                </DockPanel>
+
                                 <TextBlock Text="Watched folders" FontWeight="Bold" Margin="0,0,0,8"/>
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="220"
                                               HorizontalScrollBarVisibility="Disabled">
