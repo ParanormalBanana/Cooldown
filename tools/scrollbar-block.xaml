@@ -1,0 +1,189 @@
+    <!-- Scrollbar sprites are the Luna bitmaps at the 21px metric, 9-sliced from the
+         17px originals the same way msstyles SizingMargins did. See tools/gen-luna-scrollbar.ps1. -->
+    <ImageBrush x:Key="XpTrackV" ImageSource="pack://application:,,,/Assets/Xp/scroll-track.png"
+                TileMode="Tile" Viewport="0,0,21,1" ViewportUnits="Absolute" Stretch="None"/>
+    <ImageBrush x:Key="XpTrackH" ImageSource="pack://application:,,,/Assets/Xp/scroll-track-h.png"
+                TileMode="Tile" Viewport="0,0,1,21" ViewportUnits="Absolute" Stretch="None"/>
+
+    <Style x:Key="ClassicThumb" TargetType="Thumb">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="MinHeight" Value="13"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid SnapsToDevicePixels="True">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="5"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="5"/>
+                        </Grid.RowDefinitions>
+                        <Image Grid.Row="0" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-top.png"/>
+                        <Image Grid.Row="1" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-mid.png"/>
+                        <Image Grid.Row="2" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-bot.png"/>
+                        <Image x:Name="Grip" Grid.RowSpan="3" Width="9" Height="8" Stretch="None"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               IsHitTestVisible="False" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-grip.png"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- Luna hides the gripper once the thumb is too short to hold it. -->
+                        <Trigger Property="ActualHeight" Value="0">
+                            <Setter TargetName="Grip" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ClassicThumbH" TargetType="Thumb">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="MinWidth" Value="13"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Grid SnapsToDevicePixels="True">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="5"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="5"/>
+                        </Grid.ColumnDefinitions>
+                        <Image Grid.Column="0" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-left.png"/>
+                        <Image Grid.Column="1" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-mid-h.png"/>
+                        <Image Grid.Column="2" Stretch="Fill" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-thumb-right.png"/>
+                        <Image Grid.ColumnSpan="3" Width="8" Height="9" Stretch="None"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               IsHitTestVisible="False" SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Source="pack://application:,,,/Assets/Xp/scroll-grip-h.png"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ArrowRepeat" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <ContentPresenter/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TrackRepeat" TargetType="RepeatButton">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Background="Transparent"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <ControlTemplate x:Key="VerticalClassicBar" TargetType="ScrollBar">
+        <Grid Width="21" SnapsToDevicePixels="True" Background="{StaticResource XpTrackV}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="21"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="21"/>
+            </Grid.RowDefinitions>
+            <RepeatButton Grid.Row="0" Width="21" Height="21" Command="ScrollBar.LineUpCommand"
+                          Style="{StaticResource ArrowRepeat}">
+                <Image Width="21" Height="21" Stretch="None" SnapsToDevicePixels="True"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       Source="pack://application:,,,/Assets/Xp/scroll-arrow-up.png"/>
+            </RepeatButton>
+            <Track x:Name="PART_Track" Grid.Row="1" IsDirectionReversed="True">
+                <Track.DecreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource TrackRepeat}"/>
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                    <Thumb Style="{StaticResource ClassicThumb}"/>
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource TrackRepeat}"/>
+                </Track.IncreaseRepeatButton>
+            </Track>
+            <RepeatButton Grid.Row="2" Width="21" Height="21" Command="ScrollBar.LineDownCommand"
+                          Style="{StaticResource ArrowRepeat}">
+                <Image Width="21" Height="21" Stretch="None" SnapsToDevicePixels="True"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       Source="pack://application:,,,/Assets/Xp/scroll-arrow-down.png"/>
+            </RepeatButton>
+        </Grid>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="HorizontalClassicBar" TargetType="ScrollBar">
+        <Grid Height="21" SnapsToDevicePixels="True" Background="{StaticResource XpTrackH}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="21"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="21"/>
+            </Grid.ColumnDefinitions>
+            <RepeatButton Grid.Column="0" Width="21" Height="21" Command="ScrollBar.LineLeftCommand"
+                          Style="{StaticResource ArrowRepeat}">
+                <Image Width="21" Height="21" Stretch="None" SnapsToDevicePixels="True"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       Source="pack://application:,,,/Assets/Xp/scroll-arrow-left.png"/>
+            </RepeatButton>
+            <Track x:Name="PART_Track" Grid.Column="1">
+                <Track.DecreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource TrackRepeat}"/>
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                    <Thumb Style="{StaticResource ClassicThumbH}"/>
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource TrackRepeat}"/>
+                </Track.IncreaseRepeatButton>
+            </Track>
+            <RepeatButton Grid.Column="2" Width="21" Height="21" Command="ScrollBar.LineRightCommand"
+                          Style="{StaticResource ArrowRepeat}">
+                <Image Width="21" Height="21" Stretch="None" SnapsToDevicePixels="True"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       Source="pack://application:,,,/Assets/Xp/scroll-arrow-right.png"/>
+            </RepeatButton>
+        </Grid>
+    </ControlTemplate>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Stylus.IsPressAndHoldEnabled" Value="False"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Vertical">
+                <Setter Property="Width" Value="21"/>
+                <Setter Property="MinWidth" Value="21"/>
+                <Setter Property="MaxWidth" Value="21"/>
+                <Setter Property="Template" Value="{StaticResource VerticalClassicBar}"/>
+            </Trigger>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Height" Value="21"/>
+                <Setter Property="MinHeight" Value="21"/>
+                <Setter Property="MaxHeight" Value="21"/>
+                <Setter Property="Template" Value="{StaticResource HorizontalClassicBar}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
