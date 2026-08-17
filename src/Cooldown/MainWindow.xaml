@@ -179,6 +179,13 @@
                                                   IsChecked="{Binding CooldownsOnTop, Mode=OneWay}"
                                                   Command="{Binding ToggleCooldownsOnTopCommand}"/>
                                         <Separator/>
+                                        <MenuItem Header="Grid" IsCheckable="True"
+                                                  IsChecked="{Binding GridView, Mode=OneWay}"
+                                                  Command="{Binding ShowGridViewCommand}"/>
+                                        <MenuItem Header="List" IsCheckable="True"
+                                                  IsChecked="{Binding DetailsView, Mode=OneWay}"
+                                                  Command="{Binding ShowDetailsViewCommand}"/>
+                                        <Separator/>
                                         <MenuItem Header="Settings..." Command="{Binding OpenSettingsCommand}"/>
                                     </ContextMenu>
                                 </Grid.ContextMenu>
@@ -218,7 +225,8 @@
                                              ScrollViewer.CanContentScroll="True"
                                              VirtualizingPanel.IsVirtualizing="True"
                                              VirtualizingPanel.VirtualizationMode="Recycling"
-                                             VirtualizingPanel.ScrollUnit="Pixel">
+                                             VirtualizingPanel.ScrollUnit="Pixel"
+                                             PreviewMouseWheel="GameList_PreviewMouseWheel">
                                         <ListBox.Resources>
                                             <Style TargetType="ScrollBar" BasedOn="{StaticResource {x:Type ScrollBar}}">
                                                 <Style.Triggers>
@@ -237,12 +245,30 @@
                                                   IsChecked="{Binding CooldownsOnTop, Mode=OneWay}"
                                                   Command="{Binding ToggleCooldownsOnTopCommand}"/>
                                                 <Separator/>
+                                                <MenuItem Header="Grid" IsCheckable="True"
+                                                  IsChecked="{Binding GridView, Mode=OneWay}"
+                                                  Command="{Binding ShowGridViewCommand}"/>
+                                                <MenuItem Header="List" IsCheckable="True"
+                                                  IsChecked="{Binding DetailsView, Mode=OneWay}"
+                                                  Command="{Binding ShowDetailsViewCommand}"/>
+                                                <Separator/>
                                                 <MenuItem Header="Settings..." Command="{Binding OpenSettingsCommand}"/>
                                             </ContextMenu>
                                         </ListBox.ContextMenu>
                                         <ListBox.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <VirtualizingStackPanel Margin="0,-4"/>
+                                                <VirtualizingStackPanel>
+                                                    <VirtualizingStackPanel.Style>
+                                                        <Style TargetType="VirtualizingStackPanel">
+                                                            <Setter Property="Margin" Value="0,-4"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.DetailsView, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                    <Setter Property="Margin" Value="0,4,0,0"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </VirtualizingStackPanel.Style>
+                                                </VirtualizingStackPanel>
                                             </ItemsPanelTemplate>
                                         </ListBox.ItemsPanel>
                                         <ListBox.ItemContainerStyle>
@@ -280,17 +306,43 @@
                                                     </TextBlock>
                                                     <ItemsControl ItemsSource="{Binding Items}"
                                                                   Visibility="{Binding HasItems, Converter={StaticResource BoolVis}}">
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <UniformGrid Rows="1"
-                                                                             Columns="{Binding DataContext.ColumnCount, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <local:GameCard Margin="4,4"/>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
+                                                        <ItemsControl.Style>
+                                                            <Style TargetType="ItemsControl">
+                                                                <Setter Property="ItemsPanel">
+                                                                    <Setter.Value>
+                                                                        <ItemsPanelTemplate>
+                                                                            <UniformGrid Rows="1"
+                                                                                         Columns="{Binding DataContext.ColumnCount, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                                                        </ItemsPanelTemplate>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                                <Setter Property="ItemTemplate">
+                                                                    <Setter.Value>
+                                                                        <DataTemplate>
+                                                                            <local:GameCard Margin="4,4"/>
+                                                                        </DataTemplate>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DataContext.DetailsView, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                        <Setter Property="ItemsPanel">
+                                                                            <Setter.Value>
+                                                                                <ItemsPanelTemplate>
+                                                                                    <StackPanel/>
+                                                                                </ItemsPanelTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Setter Property="ItemTemplate">
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <local:GameListRow/>
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </ItemsControl.Style>
                                                     </ItemsControl>
                                                 </StackPanel>
                                             </DataTemplate>

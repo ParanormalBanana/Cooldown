@@ -52,15 +52,7 @@ public partial class GameCardXp : UserControl
     private void CardMenu_Opened(object sender, RoutedEventArgs e)
     {
         if (sender is ContextMenu menu && Vm is { } vm)
-        {
-            foreach (var item in menu.Items.OfType<MenuItem>())
-            {
-                if (item.Name == "ToggleHiddenItem")
-                    item.IsChecked = vm.ShowHidden;
-                else if (item.Name == "ToggleCooldownsOnTopItem")
-                    item.IsChecked = vm.CooldownsOnTop;
-            }
-        }
+            GameListRow.SyncViewMenu(menu, vm);
     }
 
     private void Hide_Click(object sender, RoutedEventArgs e)
@@ -81,6 +73,10 @@ public partial class GameCardXp : UserControl
     private void ToggleHidden_Click(object sender, RoutedEventArgs e) => Vm?.ToggleHidden();
 
     private void ToggleCooldownsOnTop_Click(object sender, RoutedEventArgs e) => Vm?.ToggleCooldownsOnTop();
+
+    private void ShowGrid_Click(object sender, RoutedEventArgs e) => Vm?.ShowGridView();
+
+    private void ShowDetails_Click(object sender, RoutedEventArgs e) => Vm?.ShowDetailsView();
 
     private void Settings_Click(object sender, RoutedEventArgs e) => Vm?.OpenSettings();
 }

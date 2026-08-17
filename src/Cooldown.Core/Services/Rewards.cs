@@ -11,10 +11,12 @@ internal static class Rewards
             $"Put {gameName} on cooldown", gameName);
     }
 
-    public static void NoteTakenOff(AppState state, string gameName)
+    public static void NoteTakenOff(AppState state, CooldownEntry entry)
     {
+        var stats = EnsureStats(state, entry.Game);
+        stats.LastCooldownDays = DaysOnCooldown(entry.CreatedAt);
         state.HasRanked = true;
-        AddPoints(state, -300, "takeoff", $"Took {gameName} off cooldown", gameName);
+        AddPoints(state, -300, "takeoff", $"Took {entry.Game.Name} off cooldown", entry.Game.Name);
     }
 
     public static void NoteUninstalled(AppState state, CooldownEntry entry)
@@ -38,11 +40,74 @@ internal static class Rewards
 
     public static void NoteReinstalled(AppState state, CooldownEntry entry)
     {
+        EnsureStats(state, entry.Game).Reinstalls++;
         AddPoints(state, -200, "reinstall", $"Reinstalled {entry.Game.Name}", entry.Game.Name);
         entry.ClearStreakDays = 0;
         entry.LastAwardDate = "";
         state.HasRanked = true;
     }
+
+    public static int DaysOnCooldown(string createdAt)
+    {
+        if (!DateTime.TryParse(createdAt, out var created)) return 0;
+        return Math.Max(0, (DateTime.Now.Date - created.Date).Days);
+    }
+
+    public static GameStats EnsureStats(AppState state, Game game)
+    {
+        var hit = FindStats(state, game);
+        if (hit is not null)
+        {
+            if (!string.Equals(hit.Id, game.Id, StringComparison.OrdinalIgnoreCase))
+                hit.Id = game.Id;
+            return hit;
+        }
+        hit = new GameStats { Id = game.Id };
+        state.GameStats.Add(hit);
+        return hit;
+    }
+
+    public static GameStats EnsureStats(AppState state, string gameName)
+    {
+        var game = state.Cooldowns.FirstOrDefault(c =>
+                       string.Equals(c.Game.Name, gameName, StringComparison.OrdinalIgnoreCase))?.Game
+                   ?? state.KnownGames.FirstOrDefault(g =>
+                       string.Equals(g.Name, gameName, StringComparison.OrdinalIgnoreCase))
+                   ?? state.CustomGames.FirstOrDefault(g =>
+                       string.Equals(g.Name, gameName, StringComparison.OrdinalIgnoreCase));
+        if (game is not null) return EnsureStats(state, game);
+        var orphan = state.GameStats.FirstOrDefault(s =>
+            string.Equals(s.Id, gameName, StringComparison.OrdinalIgnoreCase));
+        if (orphan is not null) return orphan;
+        orphan = new GameStats { Id = gameName };
+        state.GameStats.Add(orphan);
+        return orphan;
+    }
+
+    public static GameStats? FindStats(AppState state, Game game)
+    {
+        var byId = state.GameStats.FirstOrDefault(s =>
+            string.Equals(s.Id, game.Id, StringComparison.OrdinalIgnoreCase));
+        if (byId is not null) return byId;
+        var byName = state.GameStats.FirstOrDefault(s =>
+            string.Equals(s.Id, game.Name, StringComparison.OrdinalIgnoreCase));
+        if (byName is not null) return byName;
+        foreach (var stats in state.GameStats)
+        {
+            var other = GameForStatsId(state, stats.Id);
+            if (other is not null && Detector.SameGame(game, other))
+                return stats;
+        }
+        return null;
+    }
+
+    private static Game? GameForStatsId(AppState state, string id) =>
+        state.Cooldowns.Select(c => c.Game).FirstOrDefault(g =>
+            string.Equals(g.Id, id, StringComparison.OrdinalIgnoreCase))
+        ?? state.KnownGames.FirstOrDefault(g =>
+            string.Equals(g.Id, id, StringComparison.OrdinalIgnoreCase))
+        ?? state.CustomGames.FirstOrDefault(g =>
+            string.Equals(g.Id, id, StringComparison.OrdinalIgnoreCase));
 
     public static string Rank(AppState state) => RankFromScore(state.Points, state.HasRanked);
 
@@ -82,6 +147,8 @@ internal static class Rewards
         state.Points += points;
         state.LifetimePoints += points;
         state.HasRanked = true;
+        if (!string.IsNullOrEmpty(gameName))
+            EnsureStats(state, gameName).Points += points;
         state.Events.Add(new RewardEvent
         {
             At = DateTime.Now.ToString("s"),

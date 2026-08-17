@@ -40,6 +40,11 @@
             <MenuItem x:Name="ToggleCooldownsOnTopItem" Header="Cooldown games on top" IsCheckable="True"
                       Click="ToggleCooldownsOnTop_Click"/>
             <Separator/>
+            <MenuItem x:Name="GridViewItem" Header="Grid" IsCheckable="True"
+                      Click="ShowGrid_Click"/>
+            <MenuItem x:Name="ListViewItem" Header="List" IsCheckable="True"
+                      Click="ShowDetails_Click"/>
+            <Separator/>
             <MenuItem Header="Settings..." Click="Settings_Click"/>
         </ContextMenu>
     </UserControl.ContextMenu>

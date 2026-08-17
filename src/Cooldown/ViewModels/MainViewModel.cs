@@ -73,12 +73,14 @@ internal sealed class MainViewModel : ObservableObject
         PutOnCooldownCommand = new RelayCommand(_ => PutOnCooldown());
         TakeOffCooldownCommand = new RelayCommand(_ => TakeOffCooldown());
         WarnTakeOffCommand = new RelayCommand(_ => SetModal("off-warn"));
-        CancelTakeOffWarnCommand = new RelayCommand(_ => SetModal("off"));
+        CancelTakeOffWarnCommand = new RelayCommand(_ => CloseModal());
         WarnSkipPutOnCommand = new RelayCommand(_ => SetModal("put-warn"));
         CancelPutOnWarnCommand = new RelayCommand(_ => SetModal("put"));
         OpenAddCommand = new RelayCommand(_ => ScanCustomFolder());
         ToggleHiddenCommand = new RelayCommand(_ => ToggleHidden());
         ToggleCooldownsOnTopCommand = new RelayCommand(_ => ToggleCooldownsOnTop());
+        ShowGridViewCommand = new RelayCommand(_ => ShowGridView());
+        ShowDetailsViewCommand = new RelayCommand(_ => ShowDetailsView());
         OpenSettingsCommand = new RelayCommand(_ => OpenSettings());
         RemoveWatchFolderCommand = new RelayCommand(p =>
         {
@@ -118,6 +120,8 @@ internal sealed class MainViewModel : ObservableObject
     public ICommand OpenAddCommand { get; }
     public ICommand ToggleHiddenCommand { get; }
     public ICommand ToggleCooldownsOnTopCommand { get; }
+    public ICommand ShowGridViewCommand { get; }
+    public ICommand ShowDetailsViewCommand { get; }
     public ICommand OpenSettingsCommand { get; }
     public ICommand RemoveWatchFolderCommand { get; }
     public ICommand RemoveBlacklistCommand { get; }
@@ -177,6 +181,10 @@ internal sealed class MainViewModel : ObservableObject
             Raise(nameof(CooldownsOnTop));
         }
     }
+    public bool DetailsView =>
+        string.Equals(_state.LibraryView, "list", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(_state.LibraryView, "details", StringComparison.OrdinalIgnoreCase);
+    public bool GridView => !DetailsView;
     public string EmptyMessage { get => _emptyMessage; private set => Set(ref _emptyMessage, value); }
     public bool ShowEmpty { get => _showEmpty; private set => Set(ref _showEmpty, value); }
 
@@ -237,6 +245,9 @@ internal sealed class MainViewModel : ObservableObject
     public void OnCardRealized(GameItem item) =>
         item.EnsureCover((int)Math.Round(CardWidth));
 
+    public void OnListRowRealized(GameItem item) =>
+        item.EnsureCover(32);
+
     private void DebounceSearch()
     {
         _searchTimer.Stop();
@@ -278,8 +289,12 @@ internal sealed class MainViewModel : ObservableObject
             || g.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
             || g.Source.Contains(query, StringComparison.OrdinalIgnoreCase);
 
-        GameItem Make(Game g) =>
-            new(g, OnCooldown(g), hidden.Contains(g.Id));
+        GameItem Make(Game g)
+        {
+            var on = OnCooldown(g);
+            var entry = _state.Cooldowns.FirstOrDefault(c => Detector.SameGame(c.Game, g));
+            return new(g, on, hidden.Contains(g.Id), entry, Rewards.FindStats(_state, g));
+        }
 
         var visible = listed.Where(g => !hidden.Contains(g.Id) && Matches(g)).Select(Make).ToList();
         var hiddenItems = ShowHidden
@@ -324,14 +339,14 @@ internal sealed class MainViewModel : ObservableObject
 
     private void AddItemRows(List<GameItem> items)
     {
-        var cols = Math.Max(1, ColumnCount);
+        var cols = DetailsView ? 1 : Math.Max(1, ColumnCount);
         for (var i = 0; i < items.Count; i += cols)
             Rows.Add(new GameRow(items.Skip(i).Take(cols).ToList()));
     }
 
     private void PrefetchVisibleCovers()
     {
-        var width = (int)Math.Round(CardWidth);
+        var width = DetailsView ? 32 : (int)Math.Round(CardWidth);
         foreach (var row in Rows.Take(8))
         {
             foreach (var item in row.Items)
@@ -578,7 +593,7 @@ internal sealed class MainViewModel : ObservableObject
     {
         if (_active is null) return;
         var name = _active.Game.Name;
-        Rewards.NoteTakenOff(_state, name);
+        Rewards.NoteTakenOff(_state, _active);
         _state.Cooldowns = _state.Cooldowns.Where(c => c.Id != _active.Id).ToList();
         Storage.Save(_state);
         Task.Run(() => Scheduler.EnsureBackgroundTasks(_state));
@@ -640,6 +655,23 @@ internal sealed class MainViewModel : ObservableObject
     {
         CooldownsOnTop = !CooldownsOnTop;
         Storage.Save(_state);
+        RebuildRows();
+    }
+
+    public void ShowGridView() => SetLibraryView("grid");
+
+    public void ShowDetailsView() => SetLibraryView("list");
+
+    private void SetLibraryView(string view)
+    {
+        var next = string.Equals(view, "list", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(view, "details", StringComparison.OrdinalIgnoreCase)
+            ? "list" : "grid";
+        if (string.Equals(_state.LibraryView, next, StringComparison.OrdinalIgnoreCase)) return;
+        _state.LibraryView = next;
+        Storage.Save(_state);
+        Raise(nameof(DetailsView));
+        Raise(nameof(GridView));
         RebuildRows();
     }
 

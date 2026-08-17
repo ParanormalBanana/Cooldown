@@ -34,7 +34,10 @@ public partial class MainWindow : Window
         Loaded += (_, _) =>
         {
             if (DataContext is MainViewModel vm)
+            {
                 vm.SetViewportWidth(GameList.ActualWidth > 0 ? GameList.ActualWidth : ActualWidth - 48);
+                GameListRow.SyncScrollMode(GameList, vm);
+            }
         };
         DataContextChanged += (_, _) =>
         {
@@ -62,6 +65,9 @@ public partial class MainWindow : Window
     {
         if (e.PropertyName is nameof(MainViewModel.ModalOpen) or null)
             SyncDialog();
+        if (e.PropertyName is nameof(MainViewModel.DetailsView) or null
+            && DataContext is MainViewModel vm)
+            GameListRow.SyncScrollMode(GameList, vm);
     }
 
     private void SyncDialog()
@@ -123,6 +129,9 @@ public partial class MainWindow : Window
         if (DataContext is MainViewModel vm)
             vm.OpenProgressCommand.Execute(null);
     }
+
+    private void GameList_PreviewMouseWheel(object sender, MouseWheelEventArgs e) =>
+        GameListRow.ScrollOneLine(sender, e);
 
     private void Scrim_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {

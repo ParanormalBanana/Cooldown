@@ -31,4 +31,14 @@ public sealed class AppState
     [JsonPropertyName("disabled_sources")] public List<string> DisabledSources { get; set; } = [];
     [JsonPropertyName("disabled_scan_dirs")] public List<string> DisabledScanDirs { get; set; } = [];
     [JsonPropertyName("theme")] public string Theme { get; set; } = "1998";
+    [JsonPropertyName("library_view")] public string LibraryView { get; set; } = "grid";
+    [JsonPropertyName("game_stats")] public List<GameStats> GameStats { get; set; } = [];
+}
+
+public sealed class GameStats
+{
+    [JsonPropertyName("id")] public string Id { get; set; } = "";
+    [JsonPropertyName("reinstalls")] public int Reinstalls { get; set; }
+    [JsonPropertyName("points")] public int Points { get; set; }
+    [JsonPropertyName("last_cooldown_days")] public int LastCooldownDays { get; set; }
 }

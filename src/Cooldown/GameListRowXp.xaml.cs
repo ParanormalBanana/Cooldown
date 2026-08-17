@@ -2,19 +2,26 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Cooldown.Themes;
 using Cooldown.ViewModels;
 
 namespace Cooldown;
 
-public partial class GameCardWin11 : UserControl
+public partial class GameListRowXp : UserControl
 {
-    public GameCardWin11()
+    private static readonly SolidColorBrush Hot = Brush("#316AC5");
+    private static readonly SolidColorBrush Face = Brush("#FFFFFF");
+    private static readonly SolidColorBrush Line = Brush("#E2DED5");
+    private static readonly SolidColorBrush Ink = Brush("#000000");
+
+    private bool _pressed;
+
+    public GameListRowXp()
     {
         InitializeComponent();
         DataContextChanged += (_, _) =>
         {
-            SetPressed(false);
+            _pressed = false;
+            RefreshChrome();
             RequestCover();
         };
         Loaded += (_, _) => RequestCover();
@@ -23,53 +30,62 @@ public partial class GameCardWin11 : UserControl
     private void RequestCover()
     {
         if (DataContext is GameItem item && Window.GetWindow(this)?.DataContext is MainViewModel vm)
-            vm.OnCardRealized(item);
+            vm.OnListRowRealized(item);
     }
 
     private MainViewModel? Vm => Window.GetWindow(this)?.DataContext as MainViewModel;
 
-    private void Card_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        if (sender is not Border card || card.ActualWidth <= 0 || card.ActualHeight <= 0)
-            return;
-        card.Clip = new RectangleGeometry(
-            new Rect(0, 0, card.ActualWidth, card.ActualHeight), 8, 8);
-    }
-
-    private void Card_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void Row_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         Root.CaptureMouse();
-        SetPressed(true);
+        _pressed = true;
+        RefreshChrome();
         e.Handled = true;
     }
 
-    private void Card_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    private void Row_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         if (!Root.IsMouseCaptured) return;
         var inside = Root.IsMouseOver;
         Root.ReleaseMouseCapture();
-        SetPressed(false);
+        _pressed = false;
+        RefreshChrome();
         if (inside && DataContext is GameItem item)
             Vm?.SelectGameCommand.Execute(item);
         e.Handled = true;
     }
 
-    private void Card_LostMouseCapture(object sender, MouseEventArgs e) => SetPressed(false);
-
-    private void SetPressed(bool pressed)
+    private void Row_LostMouseCapture(object sender, MouseEventArgs e)
     {
-        PressShift.Margin = pressed ? new Thickness(1, 1, -1, -1) : new Thickness(0);
-        PressShift.Opacity = pressed ? 0.92 : 1;
+        _pressed = false;
+        RefreshChrome();
+    }
+
+    private void Row_MouseEnter(object sender, MouseEventArgs e) => RefreshChrome();
+
+    private void Row_MouseLeave(object sender, MouseEventArgs e) => RefreshChrome();
+
+    private void RefreshChrome()
+    {
+        var hot = _pressed || IsMouseOver;
+        Root.Background = hot ? Hot : Face;
+        Root.BorderBrush = hot ? Hot : Line;
+        PaintInk(hot && !_pressed ? Face : Ink);
+    }
+
+    private void PaintInk(Brush ink)
+    {
+        TitleText.Foreground = ink;
+        LauncherText.Foreground = ink;
+        DaysLabel.Foreground = ink;
+        ReinstallsLabel.Foreground = ink;
+        ScoreLabel.Foreground = ink;
     }
 
     private void CardMenu_Opened(object sender, RoutedEventArgs e)
     {
-        if (sender is ContextMenu menu)
-        {
-            Win11Palette.ApplyTo(menu.Resources);
-            if (Vm is { } vm)
-                GameListRow.SyncViewMenu(menu, vm);
-        }
+        if (sender is ContextMenu menu && Vm is { } vm)
+            GameListRow.SyncViewMenu(menu, vm);
     }
 
     private void Hide_Click(object sender, RoutedEventArgs e)
@@ -96,4 +112,11 @@ public partial class GameCardWin11 : UserControl
     private void ShowDetails_Click(object sender, RoutedEventArgs e) => Vm?.ShowDetailsView();
 
     private void Settings_Click(object sender, RoutedEventArgs e) => Vm?.OpenSettings();
+
+    private static SolidColorBrush Brush(string hex)
+    {
+        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
+        brush.Freeze();
+        return brush;
+    }
 }

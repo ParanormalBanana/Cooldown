@@ -40,6 +40,13 @@ internal static class Storage
                             : entry.CreatedAt;
                 }
                 MigrateScore(state);
+                var statsWereEmpty = state.GameStats.Count == 0;
+                MigrateGameStats(state);
+                if (statsWereEmpty && state.GameStats.Count > 0)
+                {
+                    try { Write(state); }
+                    catch (Exception ex) { Log.Error("Could not save game stats", ex); }
+                }
                 return state;
             }
             catch (Exception ex)
@@ -63,23 +70,40 @@ internal static class Storage
         state.HasRanked = hadCooldown || hadScore;
     }
 
+    private static void MigrateGameStats(AppState state)
+    {
+        if (state.GameStats.Count > 0) return;
+        foreach (var ev in state.Events)
+        {
+            if (string.IsNullOrWhiteSpace(ev.GameName)) continue;
+            var stats = Rewards.EnsureStats(state, ev.GameName);
+            stats.Points += ev.Points;
+            if (string.Equals(ev.Kind, "reinstall", StringComparison.OrdinalIgnoreCase))
+                stats.Reinstalls++;
+        }
+        foreach (var entry in state.Cooldowns)
+        {
+            var stats = Rewards.EnsureStats(state, entry.Game);
+            stats.LastCooldownDays = Rewards.DaysOnCooldown(entry.CreatedAt);
+        }
+    }
+
     public static void Save(AppState state)
     {
         lock (Gate)
         {
-            try
-            {
-                if (state.Events.Count > 200)
-                    state.Events = state.Events.Skip(state.Events.Count - 200).ToList();
-                var tmp = AppPaths.DataFile + ".tmp";
-                File.WriteAllText(tmp, JsonSerializer.Serialize(state, JsonOptions));
-                File.Copy(tmp, AppPaths.DataFile, overwrite: true);
-                File.Delete(tmp);
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Could not save state", ex);
-            }
+            try { Write(state); }
+            catch (Exception ex) { Log.Error("Could not save state", ex); }
         }
+    }
+
+    private static void Write(AppState state)
+    {
+        if (state.Events.Count > 200)
+            state.Events = state.Events.Skip(state.Events.Count - 200).ToList();
+        var tmp = AppPaths.DataFile + ".tmp";
+        File.WriteAllText(tmp, JsonSerializer.Serialize(state, JsonOptions));
+        File.Copy(tmp, AppPaths.DataFile, overwrite: true);
+        File.Delete(tmp);
     }
 }

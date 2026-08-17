@@ -9,11 +9,19 @@ internal sealed class GameItem : ObservableObject
     private bool _onCooldown;
     private int _loadedWidth;
 
-    public GameItem(Game game, bool onCooldown, bool hidden)
+    public GameItem(Game game, bool onCooldown, bool hidden, CooldownEntry? entry = null, GameStats? stats = null)
     {
         Game = game;
         IsHidden = hidden;
         _onCooldown = onCooldown;
+        Launcher = game.Source;
+        DaysText = "";
+        if (onCooldown)
+            DaysText = $"{Rewards.DaysOnCooldown(entry?.CreatedAt ?? "")} day(s) on cooldown";
+        else if (stats is not null)
+            DaysText = $"{stats.LastCooldownDays} day(s) on cooldown";
+        ReinstallsText = stats is null ? "" : $"{stats.Reinstalls} reinstalls";
+        ScoreText = stats is null ? "" : $"{stats.Points} accumulated points";
     }
 
     public Game Game { get; }
@@ -21,6 +29,10 @@ internal sealed class GameItem : ObservableObject
     public string Name => Game.Name;
     public bool IsHidden { get; }
     public string Title => Game.Name;
+    public string Launcher { get; }
+    public string DaysText { get; }
+    public string ReinstallsText { get; }
+    public string ScoreText { get; }
 
     public bool OnCooldown
     {
