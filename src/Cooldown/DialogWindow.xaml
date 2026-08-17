@@ -116,9 +116,28 @@
                                         <Button DockPanel.Dock="Right" Content="On second thought..." MinWidth="75" Height="23"
                                                 Padding="12,1" Margin="0,0,6,0"
                                                 Style="{StaticResource GhostButton}"
-                                                Command="{Binding CloseModalCommand}"/>
+                                                Command="{Binding WarnSkipPutOnCommand}"/>
                                         <TextBlock/>
                                     </DockPanel>
+                                </StackPanel>
+
+                                <StackPanel Visibility="{Binding ModalPutOnWarn, Converter={StaticResource BoolVis}}">
+                                    <TextBlock Text="Wait! You were so close!"
+                                               FontSize="12" FontWeight="Bold"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock Text="Give it another thought☺"
+                                               FontSize="12"
+                                               TextWrapping="Wrap" Margin="0,6,0,14"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Content="sorry bro" MinWidth="75" Height="23"
+                                                Padding="12,1" Margin="0,0,6,0"
+                                                Style="{StaticResource GhostButton}"
+                                                Command="{Binding CloseModalCommand}"/>
+                                        <Button Content="alr, you got me" MinWidth="75" Height="23"
+                                                Padding="12,1"
+                                                Style="{StaticResource AccentButton}"
+                                                Command="{Binding CancelPutOnWarnCommand}"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <StackPanel Visibility="{Binding ModalTakeOff, Converter={StaticResource BoolVis}}">

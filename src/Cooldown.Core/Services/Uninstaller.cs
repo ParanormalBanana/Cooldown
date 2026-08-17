@@ -82,6 +82,7 @@ internal static class Uninstaller
     private static void RemoveSteamGame(Game game)
     {
         var appId = game.SteamAppId;
+        StopNamed("steam", "steamwebhelper");
         var install = !string.IsNullOrEmpty(game.InstallPath)
             ? game.InstallPath
             : Detector.SteamInstallDir(appId);
@@ -91,7 +92,7 @@ internal static class Uninstaller
             if (steamapps is not null)
             {
                 var manifest = Path.Combine(steamapps, $"appmanifest_{appId}.acf");
-                try { if (File.Exists(manifest)) File.Delete(manifest); } catch { /* ignore */ }
+                TryDeleteFile(manifest);
             }
             RemoveInstallDir(install, allowCustom: false);
         }
@@ -125,8 +126,121 @@ internal static class Uninstaller
             Log.Info($"Refusing to delete unsafely-looking path: {rawPath}");
             return;
         }
-        try { Directory.Delete(rawPath, recursive: true); }
-        catch (Exception ex) { Log.Warn($"Could not delete {rawPath}: {ex.Message}"); }
+        StopProcessesIn(rawPath);
+        foreach (var file in WalkFiles(rawPath))
+            TryDeleteFile(file);
+        foreach (var dir in WalkDirs(rawPath).OrderByDescending(d => d.Length))
+            TryDeleteDir(dir);
+        TryDeleteDir(rawPath);
+    }
+
+    private static void StopProcessesIn(string root)
+    {
+        string resolved;
+        try { resolved = Path.GetFullPath(root).TrimEnd('\\', '/') + Path.DirectorySeparatorChar; }
+        catch { return; }
+        foreach (var proc in Process.GetProcesses())
+        {
+            try
+            {
+                var exe = proc.MainModule?.FileName;
+                if (string.IsNullOrEmpty(exe)) continue;
+                var full = Path.GetFullPath(exe);
+                if (full.StartsWith(resolved, StringComparison.OrdinalIgnoreCase))
+                    proc.Kill(entireProcessTree: true);
+            }
+            catch { /* access / exited */ }
+            finally { proc.Dispose(); }
+        }
+        Thread.Sleep(400);
+    }
+
+    private static void StopNamed(params string[] names)
+    {
+        foreach (var name in names)
+        {
+            foreach (var proc in Process.GetProcessesByName(name))
+            {
+                try { proc.Kill(entireProcessTree: true); }
+                catch { /* ignore */ }
+                finally { proc.Dispose(); }
+            }
+        }
+        Thread.Sleep(800);
+    }
+
+    private static IEnumerable<string> WalkFiles(string root)
+    {
+        var stack = new Stack<string>();
+        stack.Push(root);
+        while (stack.Count > 0)
+        {
+            var dir = stack.Pop();
+            string[] files = [];
+            string[] subs = [];
+            try { files = Directory.GetFiles(dir); }
+            catch (Exception ex) { Log.Warn($"Could not list files in {dir}: {ex.Message}"); }
+            try { subs = Directory.GetDirectories(dir); }
+            catch (Exception ex) { Log.Warn($"Could not list dirs in {dir}: {ex.Message}"); }
+            foreach (var file in files) yield return file;
+            foreach (var sub in subs) stack.Push(sub);
+        }
+    }
+
+    private static IEnumerable<string> WalkDirs(string root)
+    {
+        var stack = new Stack<string>();
+        stack.Push(root);
+        var found = new List<string>();
+        while (stack.Count > 0)
+        {
+            var dir = stack.Pop();
+            if (!dir.Equals(root, StringComparison.OrdinalIgnoreCase))
+                found.Add(dir);
+            try
+            {
+                foreach (var sub in Directory.GetDirectories(dir))
+                    stack.Push(sub);
+            }
+            catch { /* ignore */ }
+        }
+        return found;
+    }
+
+    private static void TryDeleteFile(string file)
+    {
+        for (var attempt = 0; attempt < 4; attempt++)
+        {
+            try
+            {
+                if (!File.Exists(file)) return;
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+                return;
+            }
+            catch when (attempt < 3)
+            {
+                Thread.Sleep(250);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Could not delete {file}: {ex.Message}");
+                return;
+            }
+        }
+    }
+
+    private static void TryDeleteDir(string dir)
+    {
+        try
+        {
+            if (Directory.Exists(dir))
+                Directory.Delete(dir, recursive: false);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Could not delete {dir}: {ex.Message}");
+        }
     }
 
     private static bool IsSafeGameDir(string path, bool allowCustom)

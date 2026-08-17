@@ -72,6 +72,8 @@ internal sealed class MainViewModel : ObservableObject
         TakeOffCooldownCommand = new RelayCommand(_ => TakeOffCooldown());
         WarnTakeOffCommand = new RelayCommand(_ => SetModal("off-warn"));
         CancelTakeOffWarnCommand = new RelayCommand(_ => SetModal("off"));
+        WarnSkipPutOnCommand = new RelayCommand(_ => SetModal("put-warn"));
+        CancelPutOnWarnCommand = new RelayCommand(_ => SetModal("put"));
         OpenAddCommand = new RelayCommand(_ => ScanCustomFolder());
         ToggleHiddenCommand = new RelayCommand(_ => ToggleHidden());
         ToggleCooldownsOnTopCommand = new RelayCommand(_ => ToggleCooldownsOnTop());
@@ -101,6 +103,8 @@ internal sealed class MainViewModel : ObservableObject
     public ICommand TakeOffCooldownCommand { get; }
     public ICommand WarnTakeOffCommand { get; }
     public ICommand CancelTakeOffWarnCommand { get; }
+    public ICommand WarnSkipPutOnCommand { get; }
+    public ICommand CancelPutOnWarnCommand { get; }
     public ICommand OpenAddCommand { get; }
     public ICommand ToggleHiddenCommand { get; }
     public ICommand ToggleCooldownsOnTopCommand { get; }
@@ -154,6 +158,7 @@ internal sealed class MainViewModel : ObservableObject
 
     public bool ModalOpen => _modal != "none";
     public bool ModalPutOn => _modal == "put";
+    public bool ModalPutOnWarn => _modal == "put-warn";
     public bool ModalTakeOff => _modal == "off";
     public bool ModalTakeOffWarn => _modal == "off-warn";
     public bool ModalProgress => _modal == "progress";
@@ -162,7 +167,7 @@ internal sealed class MainViewModel : ObservableObject
     {
         "progress" => "My determination",
         "settings" => "Settings",
-        "put" or "off" or "off-warn" => string.IsNullOrWhiteSpace(SelectedName) ? "Cooldown" : SelectedName,
+        "put" or "put-warn" or "off" or "off-warn" => string.IsNullOrWhiteSpace(SelectedName) ? "Cooldown" : SelectedName,
         _ => "Cooldown",
     };
     public bool HasBlacklist => Blacklist.Count > 0;
@@ -506,6 +511,7 @@ internal sealed class MainViewModel : ObservableObject
         if (ok)
         {
             live.LastSeenInstalled = false;
+            live.ConfirmedClear = false;
             Rewards.NoteUninstalled(_state, live);
             Storage.Save(_state);
             RaiseRank();
@@ -814,6 +820,7 @@ internal sealed class MainViewModel : ObservableObject
         _modal = kind;
         Raise(nameof(ModalOpen));
         Raise(nameof(ModalPutOn));
+        Raise(nameof(ModalPutOnWarn));
         Raise(nameof(ModalTakeOff));
         Raise(nameof(ModalTakeOffWarn));
         Raise(nameof(ModalProgress));

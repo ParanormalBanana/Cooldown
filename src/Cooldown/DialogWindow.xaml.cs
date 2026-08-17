@@ -49,6 +49,7 @@ public partial class DialogWindow : Window, IFlashable
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainViewModel.ModalTakeOffWarn)
+            or nameof(MainViewModel.ModalPutOnWarn)
             or nameof(MainViewModel.ModalTakeOff)
             or nameof(MainViewModel.ModalPutOn)
             or nameof(MainViewModel.ModalProgress)
@@ -71,7 +72,7 @@ public partial class DialogWindow : Window, IFlashable
 
         SizeToContent = SizeToContent.Height;
         MaxHeight = 560;
-        Width = vm.ModalTakeOffWarn ? 320 : 560;
+        Width = vm.ModalTakeOffWarn || vm.ModalPutOnWarn ? 320 : 560;
         Dispatcher.BeginInvoke(CenterOnOwner, DispatcherPriority.Loaded);
     }
 

@@ -30,8 +30,9 @@ internal static class Worker
             var installed = Detector.IsInstalled(entry.Game, scanned);
             if (!installed)
             {
-                if (entry.LastSeenInstalled) changed = true;
+                if (entry.LastSeenInstalled || !entry.ConfirmedClear) changed = true;
                 entry.LastSeenInstalled = false;
+                entry.ConfirmedClear = true;
                 var before = (entry.ClearStreakDays, state.Points, state.Events.Count);
                 Rewards.NoteStillClear(state, entry, now.ToString("yyyy-MM-dd"));
                 if ((entry.ClearStreakDays, state.Points, state.Events.Count) != before)
@@ -39,12 +40,13 @@ internal static class Worker
                 continue;
             }
 
-            if (!entry.LastSeenInstalled)
+            if (!entry.LastSeenInstalled && entry.ConfirmedClear)
             {
                 Rewards.NoteReinstalled(state, entry);
-                entry.LastSeenInstalled = true;
+                entry.ConfirmedClear = false;
                 changed = true;
             }
+            entry.LastSeenInstalled = true;
 
             if (!ShouldUninstall(active, entry, now)) continue;
 
@@ -55,6 +57,7 @@ internal static class Worker
             if (ok)
             {
                 entry.LastSeenInstalled = false;
+                entry.ConfirmedClear = false;
                 Rewards.NoteUninstalled(state, entry);
                 scanned = scanned.Where(g => g.Id != entry.Game.Id).ToList();
             }
@@ -67,6 +70,7 @@ internal static class Worker
     private static bool ShouldUninstall(HashSet<string> events, CooldownEntry entry, DateTime now)
     {
         if (events.Contains("startup")) return true;
+        if (!entry.ConfirmedClear) return true;
         if (events.Contains("schedule") && DailyDue(entry.LastFiredAt, now)) return true;
         return false;
     }
