@@ -5,9 +5,9 @@ namespace Cooldown;
 internal static class Worker
 {
     /// <summary>
-    /// Scheduled uninstalls wait until 05:00 local time on a new calendar date.
-    /// That way a PC left on overnight is cleared by morning, without firing at
-    /// midnight while someone is still playing. Boot/logon always uninstalls.
+    /// Uninstall on put-on (UI), at Windows logon, or once per calendar day after
+    /// 05:00. Never on Cooldown/agent restart, and never as an hourly retry.
+    /// Overnight before 05:00 is left alone so a late-night session can finish.
     /// </summary>
     internal static readonly TimeSpan DayStartsAt = TimeSpan.FromHours(5);
 
@@ -72,7 +72,6 @@ internal static class Worker
     private static bool ShouldUninstall(HashSet<string> events, CooldownEntry entry, DateTime now)
     {
         if (events.Contains("startup")) return true;
-        if (!entry.ConfirmedClear) return true;
         if (events.Contains("schedule") && DailyDue(entry.LastFiredAt, now)) return true;
         return false;
     }
