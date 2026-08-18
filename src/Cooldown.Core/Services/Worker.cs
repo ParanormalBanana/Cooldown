@@ -40,7 +40,9 @@ internal static class Worker
                 continue;
             }
 
-            if (!entry.LastSeenInstalled && entry.ConfirmedClear)
+            // Game exe is the install signal. Count a reinstall if it came
+            // back after we already uninstalled once.
+            if (!entry.LastSeenInstalled && (entry.ConfirmedClear || entry.TotalUninstalls > 0))
             {
                 Rewards.NoteReinstalled(state, entry);
                 entry.ConfirmedClear = false;

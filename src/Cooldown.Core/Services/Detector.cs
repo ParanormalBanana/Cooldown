@@ -41,13 +41,6 @@ internal static class Detector
         "Steam", "Epic", "GOG", "Ubisoft", "EA", "Battle.net", "Xbox", "Rockstar", "Riot", "Windows",
     ];
 
-    private static readonly string[] JunkExeBits =
-    [
-        "uninstall", "unins000", "unitycrash", "crashhandler", "crashreport",
-        "vcredist", "dxsetup", "redist", "easyanticheat", "eosbootstrapper",
-        "overlay", "cefsharp", "webhelper",
-    ];
-
     public static List<Game> Discover(IEnumerable<string>? disabledSources = null)
     {
         var off = disabledSources?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
@@ -136,31 +129,14 @@ internal static class Detector
 
     public static bool IsInstalled(Game game, IReadOnlyList<Game>? scanned = null)
     {
-        scanned ??= Discover();
-        if (scanned.Any(item => string.Equals(item.Id, game.Id, StringComparison.OrdinalIgnoreCase)))
-            return true;
-        var key = SteamAppKey(game);
-        if (!string.IsNullOrEmpty(key))
+        var path = game.InstallPath;
+        if (scanned is not null)
         {
-            if (scanned.Any(item =>
-                    SteamAppKey(item) == key
-                    && (item.Source.Equals("Steam", StringComparison.OrdinalIgnoreCase)
-                        || item.Id.StartsWith("steam:", StringComparison.OrdinalIgnoreCase))))
-                return true;
-            if (SteamManifestPath(key) is not null)
-                return true;
+            var match = scanned.FirstOrDefault(item => SameGame(item, game, names: false));
+            if (!string.IsNullOrWhiteSpace(match?.InstallPath))
+                path = match.InstallPath;
         }
-        var path = (game.InstallPath ?? "").Trim();
-        if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
-            return false;
-        try
-        {
-            return Directory.EnumerateFileSystemEntries(path).Any();
-        }
-        catch
-        {
-            return Directory.Exists(path);
-        }
+        return GamePayload.HasGameExe(path);
     }
 
     /// <summary>
@@ -865,34 +841,7 @@ internal static class Detector
     {
         var name = Path.GetFileName(path);
         if (string.IsNullOrEmpty(name) || ShouldSkip(name)) return false;
-        return CandidateExes(path).Any(file => !IsJunkExe(Path.GetFileName(file)));
-    }
-
-    private static IEnumerable<string> CandidateExes(string root)
-    {
-        foreach (var file in SafeFiles(root, SearchOption.TopDirectoryOnly))
-            yield return file;
-        foreach (var sub in new[] { "bin", "Bin", "Binaries", "Win64", "x64", "Game", "Content" })
-        {
-            var dir = Path.Combine(root, sub);
-            foreach (var file in SafeFiles(dir, SearchOption.TopDirectoryOnly))
-                yield return file;
-        }
-        foreach (var file in SafeFiles(Path.Combine(root, "Binaries", "Win64"), SearchOption.TopDirectoryOnly))
-            yield return file;
-    }
-
-    private static IEnumerable<string> SafeFiles(string dir, SearchOption option)
-    {
-        if (!Directory.Exists(dir)) return [];
-        try { return Directory.EnumerateFiles(dir, "*.exe", option); }
-        catch { return []; }
-    }
-
-    private static bool IsJunkExe(string fileName)
-    {
-        var low = Path.GetFileNameWithoutExtension(fileName).ToLowerInvariant();
-        return JunkExeBits.Any(bit => low.Contains(bit));
+        return GamePayload.HasGameExe(path);
     }
 
     private static List<Game> Dedupe(List<Game> games)

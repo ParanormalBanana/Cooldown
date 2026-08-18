@@ -42,6 +42,7 @@ internal static class Rewards
     {
         EnsureStats(state, entry.Game).Reinstalls++;
         AddPoints(state, -200, "reinstall", $"Reinstalled {entry.Game.Name}", entry.Game.Name);
+        Log.Info($"Counted reinstall of {entry.Game.Name}");
         entry.ClearStreakDays = 0;
         entry.LastAwardDate = "";
         state.HasRanked = true;

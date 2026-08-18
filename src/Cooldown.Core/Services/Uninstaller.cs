@@ -127,11 +127,13 @@ internal static class Uninstaller
             return;
         }
         StopProcessesIn(rawPath);
-        foreach (var file in WalkFiles(rawPath))
-            TryDeleteFile(file);
-        foreach (var dir in WalkDirs(rawPath).OrderByDescending(d => d.Length))
+        foreach (var file in WalkPayloadFiles(rawPath))
+        {
+            if (GamePayload.ShouldDelete(file))
+                TryDeleteFile(file);
+        }
+        foreach (var dir in WalkPayloadDirs(rawPath).OrderByDescending(d => d.Length))
             TryDeleteDir(dir);
-        TryDeleteDir(rawPath);
     }
 
     private static void StopProcessesIn(string root)
@@ -169,7 +171,7 @@ internal static class Uninstaller
         Thread.Sleep(800);
     }
 
-    private static IEnumerable<string> WalkFiles(string root)
+    private static IEnumerable<string> WalkPayloadFiles(string root)
     {
         var stack = new Stack<string>();
         stack.Push(root);
@@ -183,11 +185,15 @@ internal static class Uninstaller
             try { subs = Directory.GetDirectories(dir); }
             catch (Exception ex) { Log.Warn($"Could not list dirs in {dir}: {ex.Message}"); }
             foreach (var file in files) yield return file;
-            foreach (var sub in subs) stack.Push(sub);
+            foreach (var sub in subs)
+            {
+                if (!GamePayload.IsSidecarDir(Path.GetFileName(sub)))
+                    stack.Push(sub);
+            }
         }
     }
 
-    private static IEnumerable<string> WalkDirs(string root)
+    private static IEnumerable<string> WalkPayloadDirs(string root)
     {
         var stack = new Stack<string>();
         stack.Push(root);
@@ -200,7 +206,10 @@ internal static class Uninstaller
             try
             {
                 foreach (var sub in Directory.GetDirectories(dir))
-                    stack.Push(sub);
+                {
+                    if (!GamePayload.IsSidecarDir(Path.GetFileName(sub)))
+                        stack.Push(sub);
+                }
             }
             catch { /* ignore */ }
         }
