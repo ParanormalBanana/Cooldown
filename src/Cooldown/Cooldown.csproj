@@ -11,7 +11,7 @@
     <Product>Cooldown</Product>
     <AssemblyTitle>Cooldown</AssemblyTitle>
     <Description>Stay uninstalled on purpose</Description>
-    <Version>0.9.0</Version>
+    <Version>0.10.0</Version>
     <ApplicationIcon>Assets\hourglass.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishSingleFile>false</PublishSingleFile>
