@@ -5,12 +5,10 @@ namespace Cooldown;
 internal static class Worker
 {
     /// <summary>
-    /// Uninstall on put-on (UI), at Windows logon, or once per calendar day after
-    /// 05:00. Never on Cooldown/agent restart, and never as an hourly retry.
-    /// Overnight before 05:00 is left alone so a late-night session can finish.
+    /// Uninstall on put-on (UI), at Windows logon, or at 05:00 via the daily task.
+    /// Hourly/schedule scans only update stats. They must never delete files, or a
+    /// same-day reinstall gets eaten while someone is playing.
     /// </summary>
-    internal static readonly TimeSpan DayStartsAt = TimeSpan.FromHours(5);
-
     public static void Run(IEnumerable<string> events)
     {
         AppPaths.Ensure();
@@ -50,7 +48,7 @@ internal static class Worker
             }
             entry.LastSeenInstalled = true;
 
-            if (!ShouldUninstall(active, entry, now)) continue;
+            if (!ShouldUninstall(active)) continue;
 
             Log.Info($"Cooldown uninstall for {entry.Game.Name} ({string.Join(",", active.OrderBy(x => x))})");
             var ok = Uninstaller.UninstallQuietly(entry.Game);
@@ -69,18 +67,6 @@ internal static class Worker
         Scheduler.EnsureBackgroundTasks(state);
     }
 
-    private static bool ShouldUninstall(HashSet<string> events, CooldownEntry entry, DateTime now)
-    {
-        if (events.Contains("startup")) return true;
-        if (events.Contains("schedule") && DailyDue(entry.LastFiredAt, now)) return true;
-        return false;
-    }
-
-    internal static bool DailyDue(string lastFiredAt, DateTime now)
-    {
-        if (now.TimeOfDay < DayStartsAt) return false;
-        if (string.IsNullOrEmpty(lastFiredAt) || !DateTime.TryParse(lastFiredAt, out var last))
-            return true;
-        return last.Date < now.Date;
-    }
+    private static bool ShouldUninstall(HashSet<string> events) =>
+        events.Contains("startup");
 }

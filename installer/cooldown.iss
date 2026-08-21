@@ -66,4 +66,5 @@ Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM Cooldown.Agent.exe /T"; Flag
 Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Cooldown\Worker"" /F"; Flags: runhidden; RunOnceId: "DelWorkerTask"
 Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Cooldown\Startup"" /F"; Flags: runhidden; RunOnceId: "DelStartupTask"
 Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Cooldown\Uninstall"" /F"; Flags: runhidden; RunOnceId: "DelUninstallTask"
+Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Cooldown\Daily"" /F"; Flags: runhidden; RunOnceId: "DelDailyTask"
 Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Cooldown\Wipe"" /F"; Flags: runhidden; RunOnceId: "DelWipeTask"
