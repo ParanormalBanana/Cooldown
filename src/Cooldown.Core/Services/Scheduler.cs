@@ -7,27 +7,33 @@ namespace Cooldown;
 internal static class Scheduler
 {
     private const string TaskWorker = @"Cooldown\Worker";
+    private const string TaskStartup = @"Cooldown\Startup";
+    private const string TaskUninstall = @"Cooldown\Uninstall";
+    private const string TaskWipe = @"Cooldown\Wipe";
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string RunWorker = "CooldownStartup";
     private const string RunWatch = "CooldownWatch";
 
-    public static void EnsureBackgroundTasks(AppState state)
+    public static void EnsureBackgroundTasks(AppState? state = null)
     {
         _ = state;
-        var workerCmd = AppPaths.AgentCommand("--worker");
-        var startupCmd = AppPaths.AgentCommand("--worker", "--startup");
-
-        UpsertHourlyTask(TaskWorker, workerCmd);
-        SetRunKey(RunWorker, startupCmd);
+        UpsertTask(TaskWorker, AppPaths.AgentCommand("--worker"), "/SC HOURLY");
+        UpsertTask(TaskStartup, AppPaths.AgentCommand("--tray"), "/SC ONLOGON");
+        UpsertTask(TaskUninstall, AppPaths.AgentCommand("--now"), "/SC ONLOGON");
+        UpsertTask(TaskWipe, AppPaths.AgentCommand("--wipe"), "/SC ONLOGON");
+        ClearRunKey(RunWorker);
         ClearRunKey(RunWatch);
         TryStartTray();
     }
+
+    public static bool RunWipe() => RunTask(TaskWipe);
 
     private static void TryStartTray()
     {
         try
         {
             if (Process.GetProcessesByName("Cooldown.Agent").Length > 0) return;
+            if (RunTask(TaskStartup)) return;
             var exe = AppPaths.AgentPath();
             if (!File.Exists(exe) || Path.GetFileNameWithoutExtension(exe) != "Cooldown.Agent")
                 return;
@@ -35,26 +41,13 @@ internal static class Scheduler
             {
                 FileName = exe,
                 Arguments = "--tray",
-                UseShellExecute = false,
-                CreateNoWindow = true,
+                UseShellExecute = true,
+                Verb = "runas",
             });
         }
         catch (Exception ex)
         {
             Log.Warn($"Could not start agent: {ex.Message}");
-        }
-    }
-
-    private static void SetRunKey(string name, string command)
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.CreateSubKey(RunKey);
-            key?.SetValue(name, command);
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"Could not write Run key {name}", ex);
         }
     }
 
@@ -68,30 +61,40 @@ internal static class Scheduler
         catch { /* ignore */ }
     }
 
-    private static void UpsertHourlyTask(string name, string command)
+    private static void UpsertTask(string name, string command, string schedule)
+    {
+        var tr = command.Replace("\"", "\\\"");
+        Schtasks($"/Create /TN \"{name}\" /TR \"{tr}\" {schedule} /RL HIGHEST /F");
+    }
+
+    private static bool RunTask(string name) => Schtasks($"/Run /TN \"{name}\"") == 0;
+
+    private static int Schtasks(string arguments)
     {
         try
         {
             using var proc = Process.Start(new ProcessStartInfo
             {
                 FileName = "schtasks",
-                Arguments = $"/Create /TN \"{name}\" /TR \"{command.Replace("\"", "\\\"")}\" /SC HOURLY /F",
+                Arguments = arguments,
                 CreateNoWindow = true,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
             });
-            if (proc is null) return;
+            if (proc is null) return -1;
             proc.WaitForExit(15_000);
             if (proc.ExitCode != 0)
             {
                 var err = proc.StandardError.ReadToEnd();
                 Log.Warn($"schtasks failed ({proc.ExitCode}): {err.Split('\n').FirstOrDefault()?.Trim()}");
             }
+            return proc.ExitCode;
         }
         catch (Exception ex)
         {
             Log.Error("Scheduled task command raised", ex);
+            return -1;
         }
     }
 }

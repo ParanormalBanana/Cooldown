@@ -7,6 +7,7 @@ internal static class AppPaths
     public static string LogFile { get; private set; } = "";
     public static string WatchLock { get; private set; } = "";
     public static string CoversDir { get; private set; } = "";
+    public static string WipeRequest { get; private set; } = "";
 
     static AppPaths() => Ensure();
 
@@ -18,6 +19,7 @@ internal static class AppPaths
         DataFile = Path.Combine(Root, "state.json");
         LogFile = Path.Combine(Root, "cooldown.log");
         WatchLock = Path.Combine(Root, "watch.lock");
+        WipeRequest = Path.Combine(Root, "wipe.json");
         CoversDir = Path.Combine(Root, "covers");
         Directory.CreateDirectory(CoversDir);
     }

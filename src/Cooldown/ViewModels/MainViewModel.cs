@@ -559,6 +559,7 @@ internal sealed class MainViewModel : ObservableObject
         {
             try
             {
+                Scheduler.EnsureBackgroundTasks(_state);
                 var ok = Uninstaller.UninstallQuietly(game);
                 _ui?.BeginInvoke(() => FinishImmediateUninstall(entry, ok));
             }
@@ -566,7 +567,6 @@ internal sealed class MainViewModel : ObservableObject
             {
                 Log.Error($"Immediate uninstall failed for {name}", ex);
             }
-            Scheduler.EnsureBackgroundTasks(_state);
         });
         CloseModal();
         RebuildRows();

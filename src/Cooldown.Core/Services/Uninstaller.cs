@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Security.Principal;
+using System.Text.Json;
 using Cooldown.Models;
 
 namespace Cooldown;
@@ -13,6 +15,52 @@ internal static class Uninstaller
     ];
 
     public static bool UninstallQuietly(Game game)
+    {
+        var ok = UninstallHere(game);
+        if (ok || IsElevated()) return ok;
+        Log.Info($"Retrying {game.Name} elevated");
+        return RetryElevated(game);
+    }
+
+    /// <summary>
+    /// Elevated one-shot: wipe the game written to wipe.json, then delete the file.
+    /// </summary>
+    public static bool TryElevatedWipeRequest()
+    {
+        var path = AppPaths.WipeRequest;
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return false;
+        try
+        {
+            var game = JsonSerializer.Deserialize<Game>(File.ReadAllText(path));
+            if (game is null) return true;
+            UninstallHere(game);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Elevated wipe request failed", ex);
+            return true;
+        }
+        finally
+        {
+            try { File.Delete(path); } catch { /* ignore */ }
+        }
+    }
+
+    public static bool IsElevated()
+    {
+        try
+        {
+            using var id = WindowsIdentity.GetCurrent();
+            return new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool UninstallHere(Game game)
     {
         try
         {
@@ -37,6 +85,43 @@ internal static class Uninstaller
         if (stillThere) Log.Info($"Uninstall did not remove {game.Name}; rule kept");
         else Log.Info($"Uninstalled {game.Name}");
         return !stillThere;
+    }
+
+    private static bool RetryElevated(Game game)
+    {
+        try
+        {
+            Scheduler.EnsureBackgroundTasks();
+            File.WriteAllText(AppPaths.WipeRequest, JsonSerializer.Serialize(game));
+            if (!Scheduler.RunWipe())
+                StartElevatedWipe();
+            var until = Environment.TickCount64 + 180_000;
+            while (Environment.TickCount64 < until && Detector.IsInstalled(game))
+                Thread.Sleep(500);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Elevated retry failed for {game.Name}", ex);
+        }
+
+        var ok = !Detector.IsInstalled(game);
+        if (ok) Log.Info($"Uninstalled {game.Name} (elevated)");
+        else Log.Info($"Uninstall did not remove {game.Name}; rule kept");
+        return ok;
+    }
+
+    private static void StartElevatedWipe()
+    {
+        var exe = AppPaths.AgentPath();
+        if (!File.Exists(exe)) return;
+        using var proc = Process.Start(new ProcessStartInfo
+        {
+            FileName = exe,
+            Arguments = "--wipe",
+            UseShellExecute = true,
+            Verb = "runas",
+        });
+        proc?.WaitForExit(180_000);
     }
 
     private static bool IsMsi(string command) =>

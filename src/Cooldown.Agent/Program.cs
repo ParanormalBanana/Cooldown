@@ -9,6 +9,19 @@ internal static class Program
     {
         AppPaths.Ensure();
         Log.Configure();
+
+        // One-shots must not take the tray mutex (the tray holds it for life).
+        if (Has(args, "--wipe"))
+        {
+            Uninstaller.TryElevatedWipeRequest();
+            return;
+        }
+        if (Has(args, "--now"))
+        {
+            Worker.Run(["startup", "schedule"]);
+            return;
+        }
+
         using var mutex = new Mutex(true, MutexName, out var created);
         if (!created) return;
 

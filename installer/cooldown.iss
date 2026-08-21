@@ -64,3 +64,6 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM Cooldown.exe /T"; Flags: runhidden; RunOnceId: "KillCooldown"
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM Cooldown.Agent.exe /T"; Flags: runhidden; RunOnceId: "KillAgent"
 Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Cooldown\Worker"" /F"; Flags: runhidden; RunOnceId: "DelWorkerTask"
+Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Cooldown\Startup"" /F"; Flags: runhidden; RunOnceId: "DelStartupTask"
+Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Cooldown\Uninstall"" /F"; Flags: runhidden; RunOnceId: "DelUninstallTask"
+Filename: "{sys}\schtasks.exe"; Parameters: "/Delete /TN ""Cooldown\Wipe"" /F"; Flags: runhidden; RunOnceId: "DelWipeTask"
