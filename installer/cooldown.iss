@@ -3,7 +3,7 @@
 ; Pass /DAppVersion=x.y.z to override the version.
 
 #ifndef AppVersion
-  #define AppVersion "0.13.0"
+  #define AppVersion "0.14.0"
 #endif
 
 #define AppName "Cooldown"
