@@ -18,11 +18,11 @@ internal static class Scheduler
     public static void EnsureBackgroundTasks(AppState? state = null)
     {
         _ = state;
-        UpsertTask(TaskWorker, AppPaths.AgentCommand("--worker"), "/SC HOURLY");
         UpsertTask(TaskStartup, AppPaths.AgentCommand("--tray"), "/SC ONLOGON");
         UpsertTask(TaskUninstall, AppPaths.AgentCommand("--now"), "/SC ONLOGON");
         UpsertTask(TaskDaily, AppPaths.AgentCommand("--now"), "/SC DAILY /ST 05:00");
         UpsertTask(TaskWipe, AppPaths.AgentCommand("--wipe"), "/SC ONLOGON");
+        DeleteTask(TaskWorker);
         ClearRunKey(RunWorker);
         ClearRunKey(RunWatch);
         TryStartTray();
@@ -71,7 +71,10 @@ internal static class Scheduler
 
     private static bool RunTask(string name) => Schtasks($"/Run /TN \"{name}\"") == 0;
 
-    private static int Schtasks(string arguments)
+    private static void DeleteTask(string name) =>
+        Schtasks($"/Delete /TN \"{name}\" /F", warn: false);
+
+    private static int Schtasks(string arguments, bool warn = true)
     {
         try
         {
@@ -86,7 +89,7 @@ internal static class Scheduler
             });
             if (proc is null) return -1;
             proc.WaitForExit(15_000);
-            if (proc.ExitCode != 0)
+            if (warn && proc.ExitCode != 0)
             {
                 var err = proc.StandardError.ReadToEnd();
                 Log.Warn($"schtasks failed ({proc.ExitCode}): {err.Split('\n').FirstOrDefault()?.Trim()}");
