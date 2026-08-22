@@ -16,6 +16,11 @@ internal static class Uninstaller
 
     public static bool UninstallQuietly(Game game)
     {
+        if (GamePayload.IsGameRunning(game.InstallPath))
+        {
+            Log.Info($"Aborting uninstall of {game.Name}, still running");
+            return false;
+        }
         var ok = UninstallHere(game);
         if (ok || IsElevated()) return ok;
         Log.Info($"Retrying {game.Name} elevated");
@@ -33,6 +38,11 @@ internal static class Uninstaller
         {
             var game = JsonSerializer.Deserialize<Game>(File.ReadAllText(path));
             if (game is null) return true;
+            if (GamePayload.IsGameRunning(game.InstallPath))
+            {
+                Log.Info($"Aborting uninstall of {game.Name}, still running");
+                return true;
+            }
             UninstallHere(game);
             return true;
         }

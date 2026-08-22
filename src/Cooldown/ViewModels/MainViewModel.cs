@@ -560,6 +560,12 @@ internal sealed class MainViewModel : ObservableObject
             try
             {
                 Scheduler.EnsureBackgroundTasks(_state);
+                if (GamePayload.IsGameRunning(game.InstallPath))
+                {
+                    Log.Info($"Skipping uninstall of {name}, still running");
+                    _ui?.BeginInvoke(() => DeferUninstall(entry));
+                    return;
+                }
                 var ok = Uninstaller.UninstallQuietly(game);
                 _ui?.BeginInvoke(() => FinishImmediateUninstall(entry, ok));
             }
@@ -572,6 +578,14 @@ internal sealed class MainViewModel : ObservableObject
         RebuildRows();
         RaiseRank();
         ShowToast($"{name} is on cooldown.");
+    }
+
+    private void DeferUninstall(CooldownEntry entry)
+    {
+        var live = _state.Cooldowns.FirstOrDefault(c => c.Id == entry.Id);
+        if (live is null) return;
+        live.DeferredUninstall = true;
+        Storage.Save(_state);
     }
 
     private void FinishImmediateUninstall(CooldownEntry entry, bool ok)

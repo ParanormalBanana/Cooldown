@@ -5,6 +5,7 @@ namespace Cooldown;
 internal sealed class TrayApp : ApplicationContext
 {
     private readonly NotifyIcon _tray;
+    private readonly System.Windows.Forms.Timer _deferred;
 
     public TrayApp(string[] firstEvents)
     {
@@ -17,7 +18,11 @@ internal sealed class TrayApp : ApplicationContext
             ContextMenuStrip = Menu(),
         };
         _tray.DoubleClick += (_, _) => OpenUi();
-        Kick(firstEvents);
+
+        _deferred = new System.Windows.Forms.Timer { Interval = 15 * 60 * 1000 };
+        _deferred.Tick += (_, _) => Kick(["deferred"]);
+        _deferred.Start();
+        Kick(firstEvents.Concat(["deferred"]).Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
     }
 
     private ContextMenuStrip Menu()
@@ -57,6 +62,7 @@ internal sealed class TrayApp : ApplicationContext
 
     private void Quit()
     {
+        _deferred.Stop();
         _tray.Visible = false;
         _tray.Dispose();
         ExitThread();
@@ -65,7 +71,10 @@ internal sealed class TrayApp : ApplicationContext
     protected override void Dispose(bool disposing)
     {
         if (disposing)
+        {
+            _deferred.Dispose();
             _tray.Dispose();
+        }
         base.Dispose(disposing);
     }
 }

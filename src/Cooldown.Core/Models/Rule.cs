@@ -14,5 +14,6 @@ public sealed class CooldownEntry
     [JsonPropertyName("clear_streak_days")] public int ClearStreakDays { get; set; }
     [JsonPropertyName("best_streak_days")] public int BestStreakDays { get; set; }
     [JsonPropertyName("total_uninstalls")] public int TotalUninstalls { get; set; }
+    [JsonPropertyName("deferred_uninstall")] public bool DeferredUninstall { get; set; }
     [JsonPropertyName("enabled")] public bool Enabled { get; set; } = true;
 }

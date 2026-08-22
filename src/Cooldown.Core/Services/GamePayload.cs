@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Cooldown;
 
 /// <summary>
@@ -39,6 +41,45 @@ internal static class GamePayload
         if (string.IsNullOrWhiteSpace(installPath) || !Directory.Exists(installPath))
             return false;
         return CandidateExes(installPath).Any(file => !IsJunkExe(Path.GetFileName(file)));
+    }
+
+    public static bool IsGameRunning(string? installPath)
+    {
+        if (string.IsNullOrWhiteSpace(installPath) || !Directory.Exists(installPath))
+            return false;
+        string root;
+        try { root = Path.GetFullPath(installPath).TrimEnd('\\', '/') + Path.DirectorySeparatorChar; }
+        catch { return false; }
+
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in CandidateExes(installPath))
+        {
+            if (IsJunkExe(Path.GetFileName(file))) continue;
+            names.Add(Path.GetFileNameWithoutExtension(file));
+        }
+        if (names.Count == 0) return false;
+
+        foreach (var name in names)
+        {
+            foreach (var proc in Process.GetProcessesByName(name))
+            {
+                try
+                {
+                    var exe = proc.MainModule?.FileName;
+                    if (string.IsNullOrEmpty(exe))
+                        return true;
+                    var full = Path.GetFullPath(exe);
+                    if (full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+                catch
+                {
+                    return true;
+                }
+                finally { proc.Dispose(); }
+            }
+        }
+        return false;
     }
 
     public static bool IsSidecarDir(string dirName) =>

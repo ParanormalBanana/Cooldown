@@ -20,7 +20,7 @@ internal static class Scheduler
         _ = state;
         UpsertTask(TaskStartup, AppPaths.AgentCommand("--tray"), "/SC ONLOGON");
         UpsertTask(TaskUninstall, AppPaths.AgentCommand("--now"), "/SC ONLOGON");
-        UpsertTask(TaskDaily, AppPaths.AgentCommand("--now"), "/SC DAILY /ST 05:00");
+        UpsertTask(TaskDaily, AppPaths.AgentCommand("--now"), "/SC DAILY /ST 08:00");
         UpsertTask(TaskWipe, AppPaths.AgentCommand("--wipe"), "/SC ONLOGON");
         DeleteTask(TaskWorker);
         ClearRunKey(RunWorker);
